@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = "Notify chat of test results"
   spec.description = "Send test results to chat"
-  spec.required_ruby_version = ">= 2.7.0"
+  spec.required_ruby_version = ">= 3.2.0"
 
   spec.metadata["source_code_uri"] = "https://github.com/SOFware/chat_notifier.git"
   spec.metadata["changelog_uri"] = "https://github.com/SOFWare/chat_notifier/blob/master/CHANGELOG.md"
