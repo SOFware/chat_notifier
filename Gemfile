@@ -7,3 +7,5 @@ gemspec
 gem "debug"
 gem "rake"
 gem "minitest"
+gem "simplecov"
+gem "simplecov-json"

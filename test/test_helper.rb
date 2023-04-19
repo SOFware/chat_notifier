@@ -4,6 +4,16 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "chat_notifier"
 require "debug"
 
+if ENV["CI"]
+  require "simplecov"
+  require "simplecov-json"
+  SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new([
+    SimpleCov::Formatter::HTMLFormatter,
+    SimpleCov::Formatter::JSONFormatter
+  ])
+  SimpleCov.start
+end
+
 require "minitest/autorun"
 
 def mimic(**kwargs)

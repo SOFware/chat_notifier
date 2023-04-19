@@ -25,3 +25,8 @@ jobs:
       run: bundle install --jobs 4 --retry 3
     - name: Run tests
       run: bundle exec rake
+    - name: SimpleCov+ Action
+      uses: joshmfrankel/simplecov-check-action@1.0.0
+      with:
+        check_job_name: "Coverage"
+        github_token: ${{ secrets.GITHUB_TOKEN }}
