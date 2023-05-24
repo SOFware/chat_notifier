@@ -8,7 +8,7 @@ module ChatNotifier
       end
 
       def run_id
-        settings.fetch("TEST_RUN_ID")
+        settings.fetch("NOTIFY_TEST_RUN_ID")
       end
     end
   end

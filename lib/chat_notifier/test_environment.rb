@@ -22,7 +22,7 @@ module ChatNotifier
     end
 
     def url
-      settings.fetch("CURRENT_REPOSITORY_URL")
+      settings.fetch("NOTIFY_CURRENT_REPOSITORY_URL")
     end
 
     def test_run_url

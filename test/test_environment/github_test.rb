@@ -7,8 +7,8 @@ describe ChatNotifier::TestEnvironment::Github do
   let(:settings) do
     {
       "DEBUG" => false,
-      "CURRENT_REPOSITORY_URL" => "https://github.com/test/test_repo",
-      "TEST_RUN_ID" => "12345"
+      "NOTIFY_CURRENT_REPOSITORY_URL" => "https://github.com/test/test_repo",
+      "NOTIFY_TEST_RUN_ID" => "12345"
     }
   end
 
@@ -19,7 +19,7 @@ describe ChatNotifier::TestEnvironment::Github do
   end
 
   describe "#run_id" do
-    it "returns the TEST_RUN_ID from settings" do
+    it "returns the NOTIFY_TEST_RUN_ID from settings" do
       expect(ChatNotifier::TestEnvironment::Github.new(settings: settings).run_id).must_equal("12345")
     end
   end

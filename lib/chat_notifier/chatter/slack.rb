@@ -12,11 +12,11 @@ module ChatNotifier
       end
 
       def webhook_url
-        settings.fetch("SLACK_WEBHOOK_URL", nil)
+        settings.fetch("NOTIFY_SLACK_WEBHOOK_URL", nil)
       end
 
       def channel
-        settings.fetch("SLACK_NOTIFY_CHANNEL", nil)
+        settings.fetch("NOTIFY_SLACK_NOTIFY_CHANNEL", nil)
       end
 
       def payload(data)

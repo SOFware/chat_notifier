@@ -5,7 +5,7 @@ describe ChatNotifier::TestEnvironment do
   let(:settings) do
     {
       "DEBUG" => debug,
-      "CURRENT_REPOSITORY_URL" => "https://github.com/test/test_repo"
+      "NOTIFY_CURRENT_REPOSITORY_URL" => "https://github.com/test/test_repo"
     }
   end
 
