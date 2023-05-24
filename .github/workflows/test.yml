@@ -13,6 +13,8 @@ jobs:
       fail-fast: false
       matrix:
         ruby: [ "3.2" ]
+    env:
+      NOTIFY_APP_NAME: "ChatNotifier"
     name: Ruby ${{ matrix.ruby }}
     steps:
     - uses: actions/checkout@v3
