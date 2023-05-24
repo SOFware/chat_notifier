@@ -30,6 +30,15 @@ Add to your config/application.rb within your namespaced module
   end
 ```
 
+Add these variables to your env files
+
+```
+      NOTIFY_SLACK_WEBHOOK_URL
+      NOTIFY_SLACK_NOTIFY_CHANNEL
+      NOTIFY_CURRENT_REPOSITORY_URL
+      NOTIFY_TEST_RUN_ID
+```
+
 ### Debug your Slack setup
 
 Create rake task to test the connection to your Slack channel
