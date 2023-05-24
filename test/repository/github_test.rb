@@ -6,7 +6,7 @@ require "chat_notifier/repository"
 describe ChatNotifier::Repository::Github do
   let(:settings) do
     {
-      "CURRENT_REPOSITORY_URL" => "https://github.com/example/repo"
+      "NOTIFY_CURRENT_REPOSITORY_URL" => "https://github.com/example/repo"
     }
   end
   let(:repository) { ChatNotifier::Repository::Github.new(settings: settings) }

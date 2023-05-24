@@ -38,13 +38,13 @@ Create rake task to test the connection to your Slack channel
 namespace :chat_notifier do
   desc "Tests chat notifier"
   task debug: :environment do
-    unless ENV["SLACK_WEBHOOK_URL"]
-      puts "You MUST set the environment variables for:\nSLACK_WEBHOOK_URL"
+    unless ENV["NOTIFY_SLACK_WEBHOOK_URL"]
+      puts "You MUST set the environment variables for:\nNOTIFY_SLACK_WEBHOOK_URL"
       return
     end
     ENV["DEBUG"] = "1"
-    ENV["CURRENT_REPOSITORY_URL"] = "https://example.com"
-    ENV["TEST_RUN_ID"] = "9999"
+    ENV["NOTIFY_CURRENT_REPOSITORY_URL"] = "https://example.com"
+    ENV["NOTIFY_TEST_RUN_ID"] = "9999"
     require "chat_notifier"
 
     failure = ChatNotifier::DebugExceptionLocation.new(location: "fake/path.rb")

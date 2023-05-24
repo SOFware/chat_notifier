@@ -4,7 +4,7 @@ module ChatNotifier
   class Repository
     class Github < self
       def url
-        settings.fetch("CURRENT_REPOSITORY_URL", nil)
+        settings.fetch("NOTIFY_CURRENT_REPOSITORY_URL", nil)
       end
 
       def link(sha)

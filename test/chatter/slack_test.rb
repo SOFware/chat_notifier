@@ -6,8 +6,8 @@ require "chat_notifier/chatter"
 describe ChatNotifier::Chatter::Slack do
   let(:settings) do
     {
-      "SLACK_WEBHOOK_URL" => "https://hooks.slack.com/abc/123",
-      "SLACK_NOTIFY_CHANNEL" => "#test"
+      "NOTIFY_SLACK_WEBHOOK_URL" => "https://hooks.slack.com/abc/123",
+      "NOTIFY_SLACK_NOTIFY_CHANNEL" => "#test"
     }
   end
 
