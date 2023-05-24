@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    chat_notifier (0.1.0)
+    chat_notifier (0.2.0)
 
 GEM
   remote: https://rubygems.org/
@@ -29,6 +29,7 @@ GEM
     simplecov_json_formatter (0.1.4)
 
 PLATFORMS
+  arm64-darwin-21
   arm64-darwin-22
   x86_64-linux
 
