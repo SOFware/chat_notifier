@@ -27,3 +27,5 @@ def mimic(**kwargs)
   end
   m
 end
+
+require "minitest/chat_notifier_plugin"
