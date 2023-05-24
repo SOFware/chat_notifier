@@ -39,6 +39,12 @@ Add these variables to your env files
       NOTIFY_TEST_RUN_ID
 ```
 
+If you are _not_ using Rails, you will need to add this ENV variable:
+
+```
+      NOTIFY_APP_NAME
+```
+
 ### Debug your Slack setup
 
 Create rake task to test the connection to your Slack channel
@@ -54,6 +60,7 @@ namespace :chat_notifier do
     ENV["DEBUG"] = "1"
     ENV["NOTIFY_CURRENT_REPOSITORY_URL"] = "https://example.com"
     ENV["NOTIFY_TEST_RUN_ID"] = "9999"
+    ENV["NOTIFY_APP_NAME"] = "Example App" # Defaults to your Rails app name
     require "chat_notifier"
 
     failure = ChatNotifier::DebugExceptionLocation.new(location: "fake/path.rb")
