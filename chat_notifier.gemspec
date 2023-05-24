@@ -5,8 +5,8 @@ require_relative "lib/chat_notifier/version"
 Gem::Specification.new do |spec|
   spec.name = "chat_notifier"
   spec.version = ChatNotifier::VERSION
-  spec.authors = ["Jim Gay"]
-  spec.email = ["jim@saturnflyer.com"]
+  spec.authors = ["Jim Gay", "Savannah Albanez"]
+  spec.email = ["jim@saturnflyer.com", "sealbanez@gmail.com"]
 
   spec.summary = "Notify chat of test results"
   spec.description = "Send test results to chat"
