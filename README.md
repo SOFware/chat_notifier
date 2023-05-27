@@ -4,15 +4,25 @@ Notify a chat room with data from your test run.
 
 ## Installation
 
-```
+```ruby
 gem "chat_notifier", git: "https://github.com/SOFware/chat_notifier.git"
 ```
 
 ## Usage
 
+### Minitest
+
+Add to your `test_helper.rb`:
+
+```ruby
+require "chat_notifier/minitest_reporter"
+```
+
+### RSpec
+
 Add to your `spec_helper.rb` or `rails_helper.rb`:
 
-```
+```ruby
 require "chat_notifier/rspec_formatter"
 
 config.add_formatter "ChatNotifier::RspecFormatter" if ENV["CI"]
@@ -20,7 +30,7 @@ config.add_formatter "ChatNotifier::RspecFormatter" if ENV["CI"]
 
 Add to your config/application.rb within your namespaced module
 
-```
+```ruby
   def self.sha
     `git rev-parse --short HEAD`.chomp
   end
