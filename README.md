@@ -12,11 +12,7 @@ gem "chat_notifier", git: "https://github.com/SOFware/chat_notifier.git"
 
 ### Minitest
 
-Add to your `test_helper.rb`:
-
-```ruby
-require "chat_notifier/minitest_reporter"
-```
+Your minitest suite should pick up the formatter automatically.
 
 ### RSpec
 
