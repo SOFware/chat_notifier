@@ -13,6 +13,13 @@ jobs:
       fail-fast: false
       matrix:
         ruby: [ "3.2" ]
+    env:
+      NOTIFY_APP_NAME: "ChatNotifier"
+      NOTIFY_SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      NOTIFY_SLACK_NOTIFY_CHANNEL: "oss-notices"
+      NOTIFY_CURRENT_REPOSITORY_URL: "${{ github.server_url }}/${{ github.repository }}"
+      NOTIFY_TEST_RUN_ID: "${{ github.run_id }}"
+      CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
     name: Ruby ${{ matrix.ruby }}
     steps:
     - uses: actions/checkout@v3

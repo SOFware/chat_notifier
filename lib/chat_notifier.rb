@@ -12,6 +12,14 @@ module ChatNotifier
   DebugSummary = Data.define(:failed_examples)
 
   class << self
+    def app
+      if defined?(::Rails)
+        Rails.application.class.module_parent
+      else
+        ENV.fetch("NOTIFY_APP_NAME")
+      end
+    end
+
     # In order to test this locally see `rake chat_notifier:debug`
     def debug!(env, summary:, notifier: :Debug)
       repository = Repository.for(env)
@@ -24,9 +32,9 @@ module ChatNotifier
       )
       messenger = Messenger.for(
         summary,
-        app: Rails.application.class.module_parent,
-        repository: repository,
-        environment: environment
+        app:,
+        repository:,
+        environment:
       )
 
       chatter.post(messenger)
@@ -43,7 +51,7 @@ module ChatNotifier
 
       messenger = Messenger.for(
         summary,
-        app: Rails.application.class.module_parent,
+        app:,
         repository:,
         environment:
       )

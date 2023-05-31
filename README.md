@@ -4,15 +4,21 @@ Notify a chat room with data from your test run.
 
 ## Installation
 
-```
+```ruby
 gem "chat_notifier", git: "https://github.com/SOFware/chat_notifier.git"
 ```
 
 ## Usage
 
+### Minitest
+
+Your minitest suite should pick up the formatter automatically.
+
+### RSpec
+
 Add to your `spec_helper.rb` or `rails_helper.rb`:
 
-```
+```ruby
 require "chat_notifier/rspec_formatter"
 
 config.add_formatter "ChatNotifier::RspecFormatter" if ENV["CI"]
@@ -20,7 +26,7 @@ config.add_formatter "ChatNotifier::RspecFormatter" if ENV["CI"]
 
 Add to your config/application.rb within your namespaced module
 
-```
+```ruby
   def self.sha
     `git rev-parse --short HEAD`.chomp
   end
@@ -39,6 +45,12 @@ Add these variables to your env files
       NOTIFY_TEST_RUN_ID
 ```
 
+If you are _not_ using Rails, you will need to add this ENV variable:
+
+```
+      NOTIFY_APP_NAME
+```
+
 ### Debug your Slack setup
 
 Create rake task to test the connection to your Slack channel
@@ -54,6 +66,7 @@ namespace :chat_notifier do
     ENV["DEBUG"] = "1"
     ENV["NOTIFY_CURRENT_REPOSITORY_URL"] = "https://example.com"
     ENV["NOTIFY_TEST_RUN_ID"] = "9999"
+    ENV["NOTIFY_APP_NAME"] = "Example App" # Defaults to your Rails app name
     require "chat_notifier"
 
     failure = ChatNotifier::DebugExceptionLocation.new(location: "fake/path.rb")
