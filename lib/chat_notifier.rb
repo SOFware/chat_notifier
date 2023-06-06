@@ -12,6 +12,10 @@ module ChatNotifier
   DebugSummary = Data.define(:failed_examples)
 
   class << self
+    require "logger"
+    @logger = Logger.new($stdout)
+    attr_accessor :logger
+
     def app
       if defined?(::Rails)
         Rails.application.class.module_parent
@@ -57,7 +61,11 @@ module ChatNotifier
       )
 
       chatter.each do |box|
-        box.conditional_post(messenger)
+        begin
+          box.conditional_post(messenger)
+        rescue => exception
+          logger.error("ChatNotifier: #{box.webhook_url} #{exception.class}: #{exception.message}")
+        end
       end
     end
   end
