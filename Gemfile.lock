@@ -6,19 +6,24 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    debug (1.7.2)
-      irb (>= 1.5.0)
-      reline (>= 0.3.1)
+    debug (1.9.2)
+      irb (~> 1.10)
+      reline (>= 0.3.8)
     docile (1.4.0)
-    io-console (0.6.0)
-    irb (1.6.4)
-      reline (>= 0.3.0)
-    json (2.6.3)
-    minitest (5.18.0)
-    rake (13.0.6)
+    io-console (0.7.2)
+    irb (1.13.2)
+      rdoc (>= 4.0.0)
+      reline (>= 0.4.2)
+    json (2.7.2)
+    minitest (5.24.1)
+    psych (5.1.2)
+      stringio
+    rake (13.2.1)
+    rdoc (6.7.0)
+      psych (>= 4.0.0)
     reissue (0.1.7)
       rake
-    reline (0.3.3)
+    reline (0.5.9)
       io-console (~> 0.5)
     simplecov (0.22.0)
       docile (~> 1.1)
@@ -29,9 +34,10 @@ GEM
       json
       simplecov
     simplecov_json_formatter (0.1.4)
+    stringio (3.1.1)
 
 PLATFORMS
-  arm64-darwin-23
+  ruby
 
 DEPENDENCIES
   chat_notifier!
