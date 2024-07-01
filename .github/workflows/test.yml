@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: [ "3.2" ]
+        ruby: [ "3.2", "3.3" ]
     env:
       NOTIFY_APP_NAME: "ChatNotifier"
       NOTIFY_SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -22,7 +22,7 @@ jobs:
       CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
     name: Ruby ${{ matrix.ruby }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
