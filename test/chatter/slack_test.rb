@@ -12,14 +12,14 @@ describe ChatNotifier::Chatter::Slack do
   end
 
   describe ".handles?" do
-    describe "when settings contains keys with SLACK" do
+    describe "when settings contains keys with NOTIFY_SLACK" do
       it "returns true" do
         assert ChatNotifier::Chatter::Slack.handles?(settings), "Expected #{ChatNotifier::Chatter::Slack} to handle #{settings.inspect}"
       end
     end
 
-    describe "when settings does not contain keys with SLACK" do
-      let(:settings) { {} }
+    describe "when settings does not contain keys with NOTIFY_SLACK" do
+      let(:settings) { { SLACK: "unrelated" } }
 
       it "returns false" do
         refute ChatNotifier::Chatter::Slack.handles?(settings), "Expected #{ChatNotifier::Chatter::Slack} not to handle #{settings.inspect}"

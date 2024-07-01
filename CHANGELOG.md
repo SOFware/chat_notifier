@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Slack chatter looks for NOTIFY_SLACK ENV variables instead of just SLACK
+
 ## 0.2.0
 
 ### Changed

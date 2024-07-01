@@ -7,7 +7,7 @@ module ChatNotifier
 
       class << self
         def handles?(settings)
-          !settings.keys.grep(/SLACK/).empty?
+          !settings.keys.grep(/NOTIFY_SLACK/).empty?
         end
       end
 
