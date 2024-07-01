@@ -16,3 +16,10 @@ task :self do
 end
 
 Rake::Task["test"].enhance(["self"])
+
+require "reissue/gem"
+
+Reissue::Task.create :reissue do |task|
+  # Required: The file to update with the new version number.
+  task.version_file = "lib/chat_notifier/version.rb"
+end
