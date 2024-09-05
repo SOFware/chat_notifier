@@ -76,3 +76,15 @@ namespace :chat_notifier do
   end
 end
 ```
+
+## Contributing
+
+This gem is managed with [Reissue](https://github.com/SOFware/reissue).
+
+Releasing a new version:
+
+```sh
+rake build:checksum
+rake release
+git push
+```
