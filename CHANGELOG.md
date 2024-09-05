@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Test on ruby 3.3
 
+### Fixed
+
+- Load "chat_notifier" from the minitest plugin
+
 ## [0.2.1] - 2024-07-01
 
 ### Added
