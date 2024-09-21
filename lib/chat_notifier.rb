@@ -11,9 +11,9 @@ module ChatNotifier
   DebugExceptionLocation = Data.define(:location)
   DebugSummary = Data.define(:failed_examples)
 
+  require "logger"
+  @logger = Logger.new($stdout)
   class << self
-    require "logger"
-    @logger = Logger.new($stdout)
     attr_accessor :logger
 
     def app
