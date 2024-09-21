@@ -16,6 +16,7 @@ GEM
       reline (>= 0.4.2)
     json (2.7.2)
     minitest (5.24.1)
+    ostruct (0.6.0)
     psych (5.1.2)
       stringio
     rake (13.2.1)
@@ -43,6 +44,7 @@ DEPENDENCIES
   chat_notifier!
   debug
   minitest
+  ostruct
   rake
   reissue
   simplecov
