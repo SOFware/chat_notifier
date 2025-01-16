@@ -17,7 +17,7 @@ module ChatNotifier
     attr_accessor :logger
 
     def app
-      if defined?(::Rails)
+      if defined?(::Rails) && Rails.respond_to?(:application)
         Rails.application.class.module_parent
       else
         ENV.fetch("NOTIFY_APP_NAME")
