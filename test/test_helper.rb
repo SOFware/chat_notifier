@@ -4,6 +4,8 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "chat_notifier"
 require "debug"
 
+ENV["NOTIFY_APP_NAME"] = "Chat Notifier"
+
 if ENV["CI"]
   require "simplecov"
   require "simplecov-json"

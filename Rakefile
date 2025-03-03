@@ -11,12 +11,6 @@ end
 
 task default: :test
 
-task :self do
-  ENV["NOTIFY_APP_NAME"] = "Chat Notifier"
-end
-
-Rake::Task["test"].enhance(["self"])
-
 require "reissue/gem"
 
 Reissue::Task.create :reissue do |task|
