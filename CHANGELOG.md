@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Dependabot configuration
 
+### Changed
+
+- Moved ENV variable setting `NOTIFY_APP_NAME` into the test helper
+
 ## [0.2.4] - 2025-01-16
 
 ### Changed
