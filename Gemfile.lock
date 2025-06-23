@@ -7,10 +7,11 @@ GEM
   remote: https://rubygems.org/
   specs:
     date (3.4.1)
-    debug (1.10.0)
+    debug (1.11.0)
       irb (~> 1.10)
       reline (>= 0.3.8)
     docile (1.4.1)
+    erb (5.0.1)
     io-console (0.8.0)
     irb (1.15.2)
       pp (>= 0.6.0)
@@ -26,7 +27,8 @@ GEM
       date
       stringio
     rake (13.2.1)
-    rdoc (6.13.1)
+    rdoc (6.14.1)
+      erb
       psych (>= 4.0.0)
     reissue (0.4.0)
       rake
