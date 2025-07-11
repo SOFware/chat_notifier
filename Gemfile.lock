@@ -7,26 +7,27 @@ GEM
   remote: https://rubygems.org/
   specs:
     date (3.4.1)
-    debug (1.10.0)
+    debug (1.11.0)
       irb (~> 1.10)
       reline (>= 0.3.8)
     docile (1.4.1)
+    erb (5.0.1)
     io-console (0.8.0)
     irb (1.15.2)
       pp (>= 0.6.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    json (2.12.0)
+    json (2.12.2)
     minitest (5.25.5)
-    ostruct (0.6.1)
     pp (0.6.2)
       prettyprint
     prettyprint (0.2.0)
     psych (5.2.6)
       date
       stringio
-    rake (13.2.1)
-    rdoc (6.13.1)
+    rake (13.3.0)
+    rdoc (6.14.1)
+      erb
       psych (>= 4.0.0)
     reissue (0.4.0)
       rake
@@ -50,7 +51,6 @@ DEPENDENCIES
   chat_notifier!
   debug
   minitest
-  ostruct
   rake
   reissue
   simplecov

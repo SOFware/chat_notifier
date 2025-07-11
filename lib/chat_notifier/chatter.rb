@@ -45,16 +45,16 @@ module ChatNotifier
     def body
     end
 
-    def post(messenger)
+    def post(messenger, process: Net::HTTP.method(:post))
       uri = URI(webhook_url)
 
-      Net::HTTP.post(uri, payload(messenger))
+      process.call(uri, payload(messenger))
     end
 
-    def conditional_post(messenger)
+    def conditional_post(messenger, process: Net::HTTP.method(:post))
       return if messenger.success? && !verbose?
 
-      post(messenger)
+      post(messenger, process:)
     end
 
     def verbose?

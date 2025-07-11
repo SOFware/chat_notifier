@@ -16,25 +16,32 @@ module ChatNotifier
   class << self
     attr_accessor :logger
 
-    def app
-      if defined?(::Rails) && Rails.respond_to?(:application)
+    def app(env: ENV, name: env.fetch("NOTIFY_APP_NAME"))
+      name ||= if defined?(::Rails) && Rails.respond_to?(:application)
         Rails.application.class.module_parent
       else
-        ENV.fetch("NOTIFY_APP_NAME")
+        raise "No app name provided and Rails is not defined"
       end
     end
 
-    # In order to test this locally see `rake chat_notifier:debug`
-    def debug!(env, summary:, notifier: :Debug)
-      repository = Repository.for(env)
-      environment = TestEnvironment.for(env)
+    STANDARDS = {
+      repository: Repository,
+      environment: TestEnvironment,
+      chatter: Chatter,
+      messenger: Messenger
+    }
 
-      chatter = Chatter.const_get(notifier).new(
+    # In order to test this locally see `rake chat_notifier:debug`
+    def debug!(env, summary:, notifier: :Debug, **kwargs)
+      repository = (kwargs[:repository] || STANDARDS[:repository]).for(env)
+      environment = (kwargs[:environment] || STANDARDS[:environment]).for(env)
+
+      chatter = (kwargs[:chatter] || STANDARDS[:chatter]).const_get(notifier).new(
         settings: env,
         repository: repository,
         environment: environment
       )
-      messenger = Messenger.for(
+      messenger = (kwargs[:messenger] || STANDARDS[:messenger]).for(
         summary,
         app:,
         repository:,
@@ -44,16 +51,16 @@ module ChatNotifier
       chatter.post(messenger)
     end
 
-    def call(summary:)
-      repository = Repository.for(ENV)
-      environment = TestEnvironment.for(ENV)
-      chatter = Chatter.handling(
+    def call(summary:, **kwargs)
+      repository = (kwargs[:repository] || STANDARDS[:repository]).for(ENV)
+      environment = (kwargs[:environment] || STANDARDS[:environment]).for(ENV)
+      chatter = (kwargs[:chatter] || STANDARDS[:chatter]).handling(
         ENV,
         repository:,
         environment:
       )
 
-      messenger = Messenger.for(
+      messenger = (kwargs[:messenger] || STANDARDS[:messenger]).for(
         summary,
         app:,
         repository:,
