@@ -19,7 +19,7 @@ describe ChatNotifier::Chatter::Slack do
     end
 
     describe "when settings does not contain keys with NOTIFY_SLACK" do
-      let(:settings) { { SLACK: "unrelated" } }
+      let(:settings) { {SLACK: "unrelated"} }
 
       it "returns false" do
         refute ChatNotifier::Chatter::Slack.handles?(settings), "Expected #{ChatNotifier::Chatter::Slack} not to handle #{settings.inspect}"

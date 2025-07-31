@@ -13,7 +13,7 @@ module ChatNotifier
       @environment = environment
     end
 
-    attr :settings, :repository, :environment
+    attr_reader :settings, :repository, :environment
 
     class << self
       def handlers

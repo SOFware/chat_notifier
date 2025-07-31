@@ -36,8 +36,8 @@ module ChatNotifier
       # Restore original Rails constant if it existed
       if defined?(original_rails)
         Object.const_set(:Rails, original_rails)
-      else
-        Object.send(:remove_const, :Rails) if Object.const_defined?(:Rails)
+      elsif Object.const_defined?(:Rails)
+        Object.send(:remove_const, :Rails)
       end
       # Restore original app name
       if defined?(original_app_name)

@@ -36,7 +36,7 @@ module ChatNotifier
       @environment = environment
     end
 
-    attr :summary, :app, :repository, :environment
+    attr_reader :summary, :app, :repository, :environment
 
     def failures = summary.failed_examples
 

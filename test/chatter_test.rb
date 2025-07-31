@@ -21,7 +21,7 @@ describe ChatNotifier::Chatter do
     describe "when NOTIFIER_VERBOSE is set" do
       it "returns true" do
         assert ChatNotifier::Chatter.new(
-          settings: { "NOTIFIER_VERBOSE" => "true" },
+          settings: {"NOTIFIER_VERBOSE" => "true"},
           repository:,
           environment:
         ).verbose?, "verbose? should be true"

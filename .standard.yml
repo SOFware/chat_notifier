@@ -1,0 +1,16 @@
+# Standard configuration
+# This tells rubocop to use standardrb's rules
+
+# Inherit from the standard gem
+inherit_gem:
+  standard: config/base.yml
+
+# Ruby version for this project
+ruby_version: 3.4
+
+# Exclude paths
+exclude:
+  - 'coverage/**/*'
+  - 'pkg/**/*'
+  - 'vendor/**/*'
+  - 'tmp/**/*'

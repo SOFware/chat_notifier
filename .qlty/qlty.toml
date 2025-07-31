@@ -1,0 +1,30 @@
+# QLTY configuration for ChatNotifier Ruby gem
+# This project uses standardrb for Ruby linting
+config_version = "0"
+
+# Exclude patterns relevant to Ruby gems
+exclude_patterns = [
+  "**/coverage/**",
+  "**/pkg/**",
+  "**/vendor/**",
+  "**/tmp/**",
+  "**/.bundle/**",
+  "**/checksums/**",
+]
+
+# Test patterns for Ruby projects
+test_patterns = [
+  "**/test/**",
+  "**/spec/**",
+  "**/*_test.rb",
+  "**/*_spec.rb",
+  "**/test_*.rb",
+  "**/spec_*.rb",
+]
+
+[smells]
+mode = "comment"
+
+[[source]]
+name = "default"
+default = true
