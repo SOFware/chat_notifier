@@ -20,6 +20,7 @@ jobs:
       NOTIFY_CURRENT_REPOSITORY_URL: "${{ github.server_url }}/${{ github.repository }}"
       NOTIFY_TEST_RUN_ID: "${{ github.run_id }}"
       CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
+      QLTY_COVERAGE_TOKEN: ${{ secrets.QLTY_COVERAGE_TOKEN }}
     name: Ruby ${{ matrix.ruby }}
     steps:
     - uses: actions/checkout@v4
@@ -32,8 +33,8 @@ jobs:
       run: bundle install --jobs 4 --retry 3
     - name: Run tests
       run: bundle exec rake
-    - name: SimpleCov+ Action
-      uses: joshmfrankel/simplecov-check-action@1.0.0
+    - name: QLTY Coverage
+      uses: qltysh/qlty-action/coverage@v1
       with:
-        check_job_name: "Coverage"
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
+        files: coverage/.resultset.json
