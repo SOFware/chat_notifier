@@ -8,7 +8,7 @@ module Minitest
     ExceptionLocation = Data.define(:location)
     Summary = Data.define(:failed_examples)
     def report
-      summary = Summary[(results.map{ |result| ExceptionLocation[result.source_location] })]
+      summary = Summary[(results.map { |result| ExceptionLocation[result.source_location] })]
       ::ChatNotifier.call(summary:)
     end
   end

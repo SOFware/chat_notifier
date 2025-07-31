@@ -6,7 +6,9 @@ require "chat_notifier/messenger"
 describe ChatNotifier::Messenger do
   # Simple test doubles
   AppDouble = Struct.new(:branch, :sha) do
-    def to_s; "app"; end
+    def to_s
+      "app"
+    end
   end
 
   RepositoryDouble = Struct.new(:url) do
@@ -48,7 +50,7 @@ describe ChatNotifier::Messenger do
 
   describe "#message" do
     let(:summary) { SummaryDouble.new([]) }
-    let(:environment) { EnvironmentDouble.new("Ruby 2.7.0")}
+    let(:environment) { EnvironmentDouble.new("Ruby 2.7.0") }
     let(:app) { AppDouble.new("test_branch", "abcdef123") }
     let(:repository) { RepositoryDouble.new("https://github.com/test/test_repo/test_branch") }
 
