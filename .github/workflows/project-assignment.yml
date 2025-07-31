@@ -9,6 +9,7 @@ on:
 permissions:
   issues: write
   pull-requests: write
+  repository-projects: write
 
 jobs:
   auto-assign:
@@ -18,4 +19,4 @@ jobs:
         uses: actions/add-to-project@v1.0.2
         with:
           project-url: 'https://github.com/orgs/SOFware/projects/10'
-          github-token: ${{ secrets.PROJECT_ASSIGNER }}
+          github-token: ${{ github.token }}
