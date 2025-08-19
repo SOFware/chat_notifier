@@ -40,7 +40,7 @@ GEM
       erb
       psych (>= 4.0.0)
     regexp_parser (2.10.0)
-    reissue (0.4.0)
+    reissue (0.4.1)
       rake
     reline (0.6.1)
       io-console (~> 0.5)
