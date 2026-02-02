@@ -14,6 +14,6 @@ task default: :test
 require "reissue/gem"
 
 Reissue::Task.create :reissue do |task|
-  # Required: The file to update with the new version number.
   task.version_file = "lib/chat_notifier/version.rb"
+  task.push_finalize = :branch
 end

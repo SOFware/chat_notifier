@@ -79,12 +79,4 @@ end
 
 ## Contributing
 
-This gem is managed with [Reissue](https://github.com/SOFware/reissue).
-
-Releasing a new version:
-
-```sh
-rake build:checksum
-rake release
-git push
-```
+This gem is managed with [Reissue](https://github.com/SOFware/reissue). Releases are automated via the [shared release workflow](https://github.com/SOFware/reissue/blob/main/.github/workflows/SHARED_WORKFLOW_README.md). Trigger a release by running the "Release gem to RubyGems.org" workflow from the Actions tab.
