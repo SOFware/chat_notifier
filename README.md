@@ -51,6 +51,22 @@ If you are _not_ using Rails, you will need to add this ENV variable:
       NOTIFY_APP_NAME
 ```
 
+### Threaded failure notifications (optional)
+
+Incoming webhooks post a single message. If you instead provide a Slack **bot
+token**, ChatNotifier uses the Slack Web API and threads failures: it posts the
+branch/run summary as a parent message, then posts the failing files — grouped
+into reasonably sized batches — as threaded replies.
+
+```
+      NOTIFY_SLACK_BOT_TOKEN        # xoxb-… bot token; enables threading
+      NOTIFY_SLACK_NOTIFY_CHANNEL   # channel id or name to post to
+      NOTIFY_SLACK_THREAD_GROUP_SIZE # optional, files per reply (default 10)
+```
+
+When both `NOTIFY_SLACK_BOT_TOKEN` and `NOTIFY_SLACK_WEBHOOK_URL` are set, the
+bot token is preferred. The bot needs the `chat:write` scope.
+
 ### Debug your Slack setup
 
 Create rake task to test the connection to your Slack channel
