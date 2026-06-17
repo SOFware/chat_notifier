@@ -2,6 +2,7 @@ PATH
   remote: .
   specs:
     chat_notifier (0.2.6)
+      logger
 
 GEM
   remote: https://rubygems.org/
@@ -12,51 +13,57 @@ GEM
       irb (~> 1.10)
       reline (>= 0.3.8)
     docile (1.4.1)
-    erb (6.0.1)
+    drb (2.2.3)
+    erb (6.0.4)
     io-console (0.8.2)
-    irb (1.16.0)
+    irb (1.18.0)
       pp (>= 0.6.0)
+      prism (>= 1.3.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    json (2.18.0)
+    json (2.19.9)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
-    minitest (5.26.1)
-    parallel (1.27.0)
-    parser (3.3.10.1)
+    logger (1.7.0)
+    minitest (6.0.6)
+      drb (~> 2.0)
+      prism (~> 1.5)
+    minitest-mock (5.27.0)
+    parallel (2.1.0)
+    parser (3.3.11.1)
       ast (~> 2.4.1)
       racc
     pp (0.6.3)
       prettyprint
     prettyprint (0.2.0)
-    prism (1.8.0)
-    psych (5.3.1)
+    prism (1.9.0)
+    psych (5.4.0)
       date
       stringio
     racc (1.8.1)
     rainbow (3.1.1)
-    rake (13.3.1)
-    rdoc (7.0.2)
+    rake (13.4.2)
+    rdoc (7.2.0)
       erb
       psych (>= 4.0.0)
       tsort
-    regexp_parser (2.11.3)
-    reissue (0.4.19)
+    regexp_parser (2.12.0)
+    reissue (0.4.22)
       rake
     reline (0.6.3)
       io-console (~> 0.5)
-    rubocop (1.82.1)
+    rubocop (1.87.0)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
-      parallel (~> 1.10)
+      parallel (>= 1.10)
       parser (>= 3.3.0.2)
       rainbow (>= 2.2.2, < 4.0)
       regexp_parser (>= 2.9.3, < 3.0)
-      rubocop-ast (>= 1.48.0, < 2.0)
+      rubocop-ast (>= 1.49.0, < 2.0)
       ruby-progressbar (~> 1.7)
       unicode-display_width (>= 2.4.0, < 4.0)
-    rubocop-ast (1.49.0)
+    rubocop-ast (1.49.1)
       parser (>= 3.3.7.2)
       prism (~> 1.7)
     rubocop-performance (1.26.1)
@@ -68,15 +75,15 @@ GEM
       docile (~> 1.1)
       simplecov-html (~> 0.11)
       simplecov_json_formatter (~> 0.1)
-    simplecov-html (0.13.1)
+    simplecov-html (0.13.2)
     simplecov-json (0.2.3)
       json
       simplecov
     simplecov_json_formatter (0.1.4)
-    standard (1.53.0)
+    standard (1.55.0)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.0)
-      rubocop (~> 1.82.0)
+      rubocop (~> 1.87.0)
       standard-custom (~> 1.0.0)
       standard-performance (~> 1.8)
     standard-custom (1.0.2)
@@ -98,6 +105,7 @@ DEPENDENCIES
   chat_notifier!
   debug
   minitest
+  minitest-mock
   rake
   reissue
   simplecov
@@ -105,4 +113,4 @@ DEPENDENCIES
   standard
 
 BUNDLED WITH
-   2.7.1
+  4.0.10

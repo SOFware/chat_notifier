@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = "Notify chat of test results"
   spec.description = "Send test results to chat"
-  spec.required_ruby_version = ">= 3.2.0"
+  spec.required_ruby_version = ">= 3.3.0"
 
   spec.metadata["source_code_uri"] = "https://github.com/SOFware/chat_notifier.git"
   spec.metadata["changelog_uri"] = "https://github.com/SOFWare/chat_notifier/blob/master/CHANGELOG.md"
@@ -19,4 +19,6 @@ Gem::Specification.new do |spec|
   spec.bindir = "exe"
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
+
+  spec.add_dependency "logger"
 end

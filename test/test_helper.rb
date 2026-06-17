@@ -17,6 +17,7 @@ if ENV["CI"]
 end
 
 require "minitest/autorun"
+require "minitest/mock"
 
 def mimic(**kwargs)
   m = Minitest::Mock.new
