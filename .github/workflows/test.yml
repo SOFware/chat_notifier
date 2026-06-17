@@ -15,7 +15,7 @@ jobs:
         ruby: [ "3.3", "3.4", "4.0" ]
     env:
       NOTIFY_APP_NAME: "ChatNotifier"
-      NOTIFY_SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      NOTIFY_SLACK_WEBHOOK_URL: ${{ secrets.NOTIFY_SLACK_WEBHOOK_URL }}
       NOTIFY_SLACK_BOT_TOKEN: ${{ secrets.NOTIFY_SLACK_BOT_TOKEN }}
       NOTIFY_SLACK_NOTIFY_CHANNEL: "C05985VPUSH" # #oss-notices
       NOTIFY_CURRENT_REPOSITORY_URL: "${{ github.server_url }}/${{ github.repository }}"
