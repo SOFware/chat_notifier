@@ -7,6 +7,7 @@ gemspec
 gem "debug"
 gem "rake"
 gem "minitest"
+gem "minitest-mock"
 gem "simplecov"
 gem "simplecov-json"
 gem "reissue"
