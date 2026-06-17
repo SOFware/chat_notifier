@@ -1,9 +1,14 @@
 # frozen_string_literal: true
 
+require_relative "../failure_groups"
+
 module ChatNotifier
   class Chatter
     class Slack < self
       Chatter.register self
+
+      API_URL = "https://slack.com/api/chat.postMessage"
+      DEFAULT_THREAD_GROUP_SIZE = 10
 
       class << self
         def handles?(settings)
@@ -15,12 +20,69 @@ module ChatNotifier
         settings.fetch("NOTIFY_SLACK_WEBHOOK_URL", nil)
       end
 
+      def bot_token
+        settings.fetch("NOTIFY_SLACK_BOT_TOKEN", nil)
+      end
+
       def channel
         settings.fetch("NOTIFY_SLACK_NOTIFY_CHANNEL", nil)
       end
 
+      def thread_group_size
+        Integer(settings.fetch("NOTIFY_SLACK_THREAD_GROUP_SIZE", DEFAULT_THREAD_GROUP_SIZE))
+      end
+
+      # When a bot token is configured we use the Slack Web API, which can
+      # thread failures. The token path is preferred over an incoming webhook.
+      def post(messenger, process: Net::HTTP.method(:post))
+        return super unless bot_token
+
+        post_via_api(messenger, process:)
+      end
+
       def payload(data)
         super(Configuration.for(data, self).to_h)
+      end
+
+      private
+
+      def post_via_api(messenger, process:)
+        parent_text = messenger.failure? ? messenger.lede : messenger.message
+        parent = post_message(text: parent_text, process:)
+
+        return parent unless messenger.failure? && ok?(parent)
+
+        thread_ts = response_ts(parent)
+        FailureGroups.new(messenger.failures, group_size: thread_group_size).reply_texts.each do |text|
+          post_message(text:, thread_ts:, process:)
+        end
+      end
+
+      def post_message(text:, process:, thread_ts: nil)
+        body = {channel: channel, text: text}
+        body[:thread_ts] = thread_ts if thread_ts
+        process.call(URI(API_URL), body.to_json, api_headers)
+      end
+
+      def api_headers
+        {
+          "Content-Type" => "application/json; charset=utf-8",
+          "Authorization" => "Bearer #{bot_token}"
+        }
+      end
+
+      def ok?(response)
+        parsed_response(response)["ok"] == true
+      end
+
+      def response_ts(response)
+        parsed_response(response)["ts"]
+      end
+
+      def parsed_response(response)
+        JSON.parse(response.body.to_s)
+      rescue JSON::ParserError
+        {}
       end
 
       class Configuration
