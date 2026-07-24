@@ -61,6 +61,10 @@ module ChatNotifier
         environment:
       )
 
+      if (store = kwargs[:thread_store])
+        chatter.each { |box| box.thread_store = store }
+      end
+
       messenger = (kwargs[:messenger] || STANDARDS[:messenger]).for(
         summary,
         app:,

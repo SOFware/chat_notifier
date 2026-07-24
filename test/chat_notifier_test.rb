@@ -139,6 +139,61 @@ module ChatNotifier
       end
     end
 
+    def test_call_injects_thread_store_into_chatters
+      original_app_name = ENV["NOTIFY_APP_NAME"]
+      ENV["NOTIFY_APP_NAME"] = "TestApp"
+
+      injected_store = Object.new
+      test_box_class = Class.new do
+        attr_accessor :thread_store
+
+        def conditional_post(messenger)
+          # Test that conditional_post was called
+        end
+      end
+      test_box = test_box_class.new
+
+      factory = ->(value) {
+        f = Class.new
+        f.define_singleton_method(:for) { |*, **| value }
+        f
+      }
+      chatter_factory_for = ->(box) {
+        f = Class.new
+        f.define_singleton_method(:handling) { |env, repository:, environment:| [box] }
+        f
+      }
+
+      ChatNotifier.call(
+        summary: @summary,
+        repository: factory.call(Object.new),
+        environment: factory.call(Object.new),
+        chatter: chatter_factory_for.call(test_box),
+        messenger: factory.call(Object.new),
+        thread_store: injected_store
+      )
+
+      assert_same injected_store, test_box.thread_store
+
+      # Without thread_store: the chatter's own default must be left alone.
+      untouched_box = test_box_class.new
+      ChatNotifier.call(
+        summary: @summary,
+        repository: factory.call(Object.new),
+        environment: factory.call(Object.new),
+        chatter: chatter_factory_for.call(untouched_box),
+        messenger: factory.call(Object.new)
+      )
+
+      assert_nil untouched_box.thread_store
+    ensure
+      if original_app_name.nil?
+        ENV.delete("NOTIFY_APP_NAME")
+      else
+        ENV["NOTIFY_APP_NAME"] = original_app_name
+      end
+    end
+
     def test_call_logs_errors_without_leaking_the_webhook_url
       original_app_name = ENV["NOTIFY_APP_NAME"]
       ENV["NOTIFY_APP_NAME"] = "TestApp"

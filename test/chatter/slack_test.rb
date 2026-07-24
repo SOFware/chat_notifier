@@ -157,6 +157,39 @@ describe ChatNotifier::Chatter::Slack do
       chatter = ChatNotifier::Chatter::Slack.new(settings:, repository: nil, environment: nil)
       expect(chatter.thread_store).must_be_instance_of(ChatNotifier::ThreadStore::Null)
     end
+
+    it "uses the Null store when NOTIFY_THREAD_STORE is none" do
+      chatter = ChatNotifier::Chatter::Slack.new(
+        settings: {"NOTIFY_SLACK_BOT_TOKEN" => "xoxb-123", "NOTIFY_THREAD_STORE" => "none"},
+        repository: nil, environment: nil
+      )
+      expect(chatter.thread_store).must_be_instance_of(ChatNotifier::ThreadStore::Null)
+    end
+  end
+
+  describe "#conditional_post with only a webhook configured" do
+    let(:communicator) { ChatNotifier::Chatter::Slack.new(settings:, repository: nil, environment: nil) }
+
+    it "posts nothing for a non-verbose success" do
+      messenger = MessengerDouble.new(
+        success?: true,
+        failure?: false,
+        lede: "ignored",
+        message: ":thumbsup: all good",
+        failures: [],
+        thread_key: "app#main",
+        status_report: {job: "test ruby-3.4", status: "passed", failures: 0, run_id: "43"}
+      )
+      calls = []
+      process = lambda do |uri, body, headers = nil|
+        calls << uri.to_s
+        FakeResponse.new("ok")
+      end
+
+      communicator.conditional_post(messenger, process:)
+
+      expect(calls).must_be_empty
+    end
   end
 
   describe "#post with a bot token configured" do
@@ -525,17 +558,21 @@ describe ChatNotifier::Chatter::Slack do
         end
 
         it "posts nothing on success when no open episode exists" do
-          communicator.thread_store = StoreDouble.new(nil)
+          store = StoreDouble.new(nil)
+          communicator.thread_store = store
           calls = record_calls { |process| communicator.conditional_post(messenger, process:) }
 
           expect(calls).must_be_empty
+          expect(store.finds.size).must_equal(1)
         end
 
         it "posts nothing on success when the episode is already resolved" do
-          communicator.thread_store = StoreDouble.new(ChatNotifier::ThreadStore::ThreadRef.new(ts: "7.7", status: "resolved"))
+          store = StoreDouble.new(ChatNotifier::ThreadStore::ThreadRef.new(ts: "7.7", status: "resolved"))
+          communicator.thread_store = store
           calls = record_calls { |process| communicator.conditional_post(messenger, process:) }
 
           expect(calls).must_be_empty
+          expect(store.finds.size).must_equal(1)
         end
 
         it "recomputes the parent to resolved after the passed status reply" do

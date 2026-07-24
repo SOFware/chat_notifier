@@ -84,7 +84,11 @@ module ChatNotifier
     attr_writer :thread_store
 
     def thread_store
-      @thread_store ||= default_thread_store
+      @thread_store ||= if settings.fetch("NOTIFY_THREAD_STORE", nil) == "none"
+        ThreadStore::Null.new
+      else
+        default_thread_store
+      end
     end
 
     def default_thread_store
