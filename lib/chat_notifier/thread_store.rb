@@ -15,3 +15,5 @@ module ChatNotifier
     end
   end
 end
+
+require_relative "thread_store/slack_metadata"

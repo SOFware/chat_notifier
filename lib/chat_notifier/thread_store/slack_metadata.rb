@@ -1,0 +1,49 @@
+# frozen_string_literal: true
+
+module ChatNotifier
+  class ThreadStore
+    # Uses the Slack channel itself as the store: parents are posted with
+    # message metadata carrying the thread key; find scans recent history.
+    class SlackMetadata < self
+      EVENT_TYPE = "chat_notifier_thread"
+      HISTORY_URL = "https://slack.com/api/conversations.history"
+      HISTORY_LIMIT = 200
+
+      def initialize(chatter:)
+        @chatter = chatter
+      end
+
+      attr_reader :chatter
+
+      def find(key)
+        response = chatter.api_form_post(HISTORY_URL, {
+          channel: chatter.channel,
+          limit: HISTORY_LIMIT,
+          include_all_metadata: true
+        })
+        unless response["ok"]
+          ChatNotifier.logger.error(
+            "ChatNotifier: thread lookup failed: #{response.fetch("error", "unrecognized response")}"
+          )
+          return nil
+        end
+        message = matching_message(response, key)
+        return nil unless message
+
+        ThreadRef.new(ts: message["ts"], status: message.dig("metadata", "event_payload", "status"))
+      end
+
+      # Posting the parent with metadata is the record; nothing separate to do.
+      def record(key, ref) = nil
+
+      private
+
+      def matching_message(response, key)
+        (response["messages"] || []).find do |message|
+          message.dig("metadata", "event_type") == EVENT_TYPE &&
+            message.dig("metadata", "event_payload", "key") == key
+        end
+      end
+    end
+  end
+end
