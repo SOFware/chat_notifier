@@ -5,7 +5,7 @@ require "support/thread_store_contract"
 
 FakeChatter = Struct.new(:channel, :responses) do
   def api_form_post(url, params, process: nil)
-    calls << [url, params]
+    calls << [url, params, process]
     (responses || []).shift || {}
   end
 
@@ -47,6 +47,17 @@ describe ChatNotifier::ThreadStore::SlackMetadata do
 
   it "returns nil when no message matches" do
     assert_nil store.find("app#unknown")
+  end
+
+  it "passes an injected process through to the chatter" do
+    probe = ->(*) {}
+    store.find("app#main", process: probe)
+    expect(chatter.calls.last.last).must_equal(probe)
+  end
+
+  it "uses the chatter's default transport when no process is given" do
+    store.find("app#main")
+    assert_nil chatter.calls.last.last
   end
 
   it "returns nil and logs when the API errors" do

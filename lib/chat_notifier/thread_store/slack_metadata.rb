@@ -15,12 +15,8 @@ module ChatNotifier
 
       attr_reader :chatter
 
-      def find(key)
-        response = chatter.api_form_post(HISTORY_URL, {
-          channel: chatter.channel,
-          limit: HISTORY_LIMIT,
-          include_all_metadata: true
-        })
+      def find(key, process: nil)
+        response = fetch_history(process)
         unless response["ok"]
           ChatNotifier.logger.error(
             "ChatNotifier: thread lookup failed: #{response.fetch("error", "unrecognized response")}"
@@ -37,6 +33,18 @@ module ChatNotifier
       def record(key, ref) = nil
 
       private
+
+      # A nil process defers to the chatter's own default transport.
+      def fetch_history(process)
+        params = {
+          channel: chatter.channel,
+          limit: HISTORY_LIMIT,
+          include_all_metadata: true
+        }
+        return chatter.api_form_post(HISTORY_URL, params) unless process
+
+        chatter.api_form_post(HISTORY_URL, params, process:)
+      end
 
       def matching_message(response, key)
         (response["messages"] || []).find do |message|

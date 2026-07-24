@@ -75,7 +75,7 @@ module ChatNotifier
         return post_message(text: messenger.message, process:) unless messenger.failure?
 
         key = messenger.thread_key
-        ref = thread_store.find(key)
+        ref = thread_store.find(key, process:)
         thread_ts = ref&.open? ? ref.ts : nil
 
         unless thread_ts

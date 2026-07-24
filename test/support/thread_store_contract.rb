@@ -16,6 +16,11 @@ module ThreadStoreContract
         assert result.nil? || result.is_a?(ChatNotifier::ThreadStore::ThreadRef),
           "find must return nil or ThreadRef, got #{result.inspect}"
       end
+
+      it "find accepts an injectable process keyword" do
+        assert_includes store.method(:find).parameters, [:key, :process],
+          "find must accept a process: keyword so callers can inject transport"
+      end
     end
   end
 end

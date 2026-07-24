@@ -10,6 +10,16 @@ RateLimitedResponse = Struct.new(:body, :code, :headers) do
 end
 MessengerDouble = Struct.new(:success?, :failure?, :lede, :message, :failures, :thread_key)
 FailureLoc = Struct.new(:location)
+StoreDouble = Struct.new(:ref) do
+  def find(key, process: nil)
+    finds << [key, process]
+    ref
+  end
+
+  def finds
+    @finds ||= []
+  end
+end
 
 describe ChatNotifier::Chatter::Slack do
   let(:settings) do
@@ -122,6 +132,9 @@ describe ChatNotifier::Chatter::Slack do
     end
 
     before do
+      # Pin a null store so these examples exercise posting behavior alone.
+      # With the default SlackMetadata store the first recorded call would be
+      # the conversations.history lookup rather than the parent message.
       communicator.thread_store = ChatNotifier::ThreadStore::Null.new
     end
 
@@ -168,21 +181,28 @@ describe ChatNotifier::Chatter::Slack do
     end
 
     it "threads into an existing open thread instead of posting a parent" do
-      store = mimic(find: [ChatNotifier::ThreadStore::ThreadRef.new(ts: "7.7", status: "failing"), "app#main"])
+      store = StoreDouble.new(ChatNotifier::ThreadStore::ThreadRef.new(ts: "7.7", status: "failing"))
       communicator.thread_store = store
-      calls = record_calls { |process| communicator.post(messenger, process:) }
+      seen_process = nil
+      calls = record_calls do |process|
+        seen_process = process
+        communicator.post(messenger, process:)
+      end
 
       refute calls.any? { |c| !c[:body].key?("thread_ts") }, "no new parent expected"
       expect(calls.first[:body]["thread_ts"]).must_equal("7.7")
-      store.verify
+      expect(store.finds).must_equal([["app#main", seen_process]])
     end
 
     it "starts a new thread when the existing thread is resolved" do
-      store = mimic(find: [ChatNotifier::ThreadStore::ThreadRef.new(ts: "7.7", status: "resolved"), "app#main"])
+      store = StoreDouble.new(ChatNotifier::ThreadStore::ThreadRef.new(ts: "7.7", status: "resolved"))
       communicator.thread_store = store
       calls = record_calls { |process| communicator.post(messenger, process:) }
 
       refute calls.first[:body].key?("thread_ts"), "resolved thread must not be reused"
+      metadata = calls.first[:body]["metadata"]
+      expect(metadata["event_payload"]["key"]).must_equal("app#main")
+      expect(metadata["event_payload"]["status"]).must_equal("failing")
     end
 
     it "prefers the bot token over a configured webhook" do
