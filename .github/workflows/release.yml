@@ -10,3 +10,4 @@ jobs:
       git_user_email: 'gems@sofwarellc.com'
       git_user_name: 'SOFware'
       ruby_version: '3.4'
+      generate_checksum: true
