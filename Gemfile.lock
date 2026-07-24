@@ -70,7 +70,7 @@ GEM
       rubocop (>= 1.75.0, < 2.0)
       rubocop-ast (>= 1.47.1, < 2.0)
     ruby-progressbar (1.13.0)
-    simplecov (1.0.1)
+    simplecov (1.0.2)
     simplecov-json (0.2.3)
       json
       simplecov
