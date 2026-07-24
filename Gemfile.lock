@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    chat_notifier (0.3.1)
+    chat_notifier (0.4.1)
       logger
 
 GEM
