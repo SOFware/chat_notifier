@@ -55,6 +55,13 @@ module ChatNotifier
         super(Configuration.for(data, self).to_h)
       end
 
+      # Slack read APIs (conversations.history, conversations.replies) take
+      # form-encoded params rather than JSON bodies.
+      def api_form_post(url, params, process: method(:http_post))
+        response = process.call(URI(url), URI.encode_www_form(params), form_headers)
+        parsed_response(response)
+      end
+
       private
 
       def post_via_api(messenger, process:)
@@ -106,6 +113,13 @@ module ChatNotifier
       def api_headers
         {
           "Content-Type" => "application/json; charset=utf-8",
+          "Authorization" => "Bearer #{bot_token}"
+        }
+      end
+
+      def form_headers
+        {
+          "Content-Type" => "application/x-www-form-urlencoded",
           "Authorization" => "Bearer #{bot_token}"
         }
       end

@@ -213,6 +213,30 @@ describe ChatNotifier::Chatter::Slack do
       expect(bodies[1]["text"]).must_equal(bodies[2]["text"])
     end
 
+    describe "#api_form_post" do
+      it "form-encodes params with the bearer token and parses JSON" do
+        captured = {}
+        process = lambda do |uri, body, headers = nil|
+          captured.merge!(uri: uri.to_s, body:, headers:)
+          FakeResponse.new(%({"ok":true,"messages":[]}))
+        end
+
+        result = communicator.api_form_post("https://slack.com/api/conversations.history",
+          {channel: "#test", limit: 200}, process:)
+
+        expect(captured[:uri]).must_equal("https://slack.com/api/conversations.history")
+        expect(captured[:body]).must_equal("channel=%23test&limit=200")
+        expect(captured[:headers]["Content-Type"]).must_equal("application/x-www-form-urlencoded")
+        expect(captured[:headers]["Authorization"]).must_equal("Bearer xoxb-test-token")
+        expect(result).must_equal({"ok" => true, "messages" => []})
+      end
+
+      it "returns an empty hash on unparseable responses" do
+        process = ->(uri, body, headers = nil) { FakeResponse.new("not json") }
+        expect(communicator.api_form_post("https://slack.com/api/x", {}, process:)).must_equal({})
+      end
+    end
+
     describe "when the run succeeds" do
       let(:messenger) do
         MessengerDouble.new(
