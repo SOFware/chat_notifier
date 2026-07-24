@@ -5,7 +5,12 @@ require "support/thread_store_contract"
 
 FakeChatter = Struct.new(:channel, :responses) do
   def api_form_post(url, params, process: nil)
+    calls << [url, params]
     (responses || []).shift || {}
+  end
+
+  def calls
+    @calls ||= []
   end
 end
 
@@ -15,6 +20,8 @@ describe ChatNotifier::ThreadStore::SlackMetadata do
       {"ts" => "9.9", "text" => "unrelated"},
       {"ts" => "5.5", "metadata" => {"event_type" => "chat_notifier_thread",
                                      "event_payload" => {"key" => "app#main", "status" => "failing"}}},
+      {"ts" => "2.2", "metadata" => {"event_type" => "chat_notifier_thread",
+                                     "event_payload" => {"key" => "app#main", "status" => "resolved"}}},
       {"ts" => "1.1", "metadata" => {"event_type" => "chat_notifier_thread",
                                      "event_payload" => {"key" => "app#other", "status" => "failing"}}}
     ]}
@@ -29,6 +36,13 @@ describe ChatNotifier::ThreadStore::SlackMetadata do
     ref = store.find("app#main")
     expect(ref.ts).must_equal("5.5")
     expect(ref.status).must_equal("failing")
+  end
+
+  it "requests channel history with metadata included" do
+    store.find("app#main")
+    url, params = chatter.calls.last
+    expect(url).must_equal("https://slack.com/api/conversations.history")
+    expect(params).must_equal({channel: "#test", limit: 200, include_all_metadata: true})
   end
 
   it "returns nil when no message matches" do
