@@ -22,6 +22,12 @@ describe ChatNotifier::TestEnvironment::Github do
     it "returns the NOTIFY_TEST_RUN_ID from settings" do
       expect(ChatNotifier::TestEnvironment::Github.new(settings: settings).run_id).must_equal("12345")
     end
+
+    it "prefers NOTIFY_TEST_RUN_ID and falls back to GITHUB_RUN_ID" do
+      expect(ChatNotifier::TestEnvironment::Github.new(settings: {"NOTIFY_TEST_RUN_ID" => "77", "GITHUB_RUN_ID" => "88"}).run_id).must_equal("77")
+      expect(ChatNotifier::TestEnvironment::Github.new(settings: {"GITHUB_RUN_ID" => "88"}).run_id).must_equal("88")
+      assert_nil ChatNotifier::TestEnvironment::Github.new(settings: {}).run_id
+    end
   end
 
   describe "#job_identifier" do

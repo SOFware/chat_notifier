@@ -8,7 +8,9 @@ module ChatNotifier
       end
 
       def run_id
-        settings.fetch("NOTIFY_TEST_RUN_ID")
+        settings.fetch("NOTIFY_TEST_RUN_ID") do
+          settings.fetch("GITHUB_RUN_ID", nil)
+        end
       end
 
       def pull_request_ref

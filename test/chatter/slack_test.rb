@@ -21,6 +21,40 @@ StoreDouble = Struct.new(:ref) do
   end
 end
 
+# MessengerDouble's Struct members are static values, but digest/resolved?
+# take the reports argument — so this double records what it receives.
+class DigestMessengerDouble
+  def initialize(resolved: false)
+    @resolved = resolved
+  end
+
+  attr_reader :digest_reports, :resolved_reports
+
+  def success? = false
+
+  def failure? = true
+
+  def lede = ":boom: failed in branch main"
+
+  def message = "ignored"
+
+  def failures = [FailureLoc.new("test/a_test.rb:1")]
+
+  def thread_key = "app#main"
+
+  def status_report = {job: "test ruby-3.4", status: "failed", failures: 1, run_id: "42"}
+
+  def digest(reports)
+    @digest_reports = reports
+    "DIGEST TEXT"
+  end
+
+  def resolved?(reports)
+    @resolved_reports = reports
+    @resolved
+  end
+end
+
 describe ChatNotifier::Chatter::Slack do
   let(:settings) do
     {
@@ -139,14 +173,26 @@ describe ChatNotifier::Chatter::Slack do
       communicator.thread_store = ChatNotifier::ThreadStore::Null.new
     end
 
+    # Form-encoded bodies (conversations.replies) are recorded as raw strings.
     def record_calls
       calls = []
       process = lambda do |uri, body, headers = nil|
-        calls << {uri: uri.to_s, body: JSON.parse(body), headers: headers}
+        parsed = begin
+          JSON.parse(body)
+        rescue JSON::ParserError
+          body
+        end
+        calls << {uri: uri.to_s, body: parsed, headers: headers}
         FakeResponse.new(%({"ok":true,"ts":"111.222"}))
       end
       yield process
       calls
+    end
+
+    # chat.postMessage calls only — post_via_api now also fetches
+    # conversations.replies after the status reply.
+    def post_message_calls(calls)
+      calls.select { |call| call[:uri] == "https://slack.com/api/chat.postMessage" }
     end
 
     it "posts the parent message to the Web API with the bearer token" do
@@ -163,7 +209,7 @@ describe ChatNotifier::Chatter::Slack do
     it "posts each failure group as a threaded reply using the parent ts" do
       calls = record_calls { |process| communicator.post(messenger, process:) }
 
-      replies = calls[1..-2] # between the parent and the trailing status reply
+      replies = post_message_calls(calls)[1..-2] # between the parent and the trailing status reply
       expect(replies.size).must_equal(2)
       replies.each do |reply|
         expect(reply[:body]["thread_ts"]).must_equal("111.222")
@@ -175,7 +221,7 @@ describe ChatNotifier::Chatter::Slack do
     it "posts a status reply with metadata after the failure replies" do
       calls = record_calls { |process| communicator.post(messenger, process:) }
 
-      status = calls.last[:body]
+      status = post_message_calls(calls).last[:body]
       expect(status["thread_ts"]).must_equal("111.222")
       expect(status["metadata"]["event_type"]).must_equal("chat_notifier_status")
       expect(status["metadata"]["event_payload"]["job"]).must_equal("test ruby-3.4")
@@ -200,8 +246,9 @@ describe ChatNotifier::Chatter::Slack do
         communicator.post(messenger, process:)
       end
 
-      refute calls.any? { |c| !c[:body].key?("thread_ts") }, "no new parent expected"
-      expect(calls.first[:body]["thread_ts"]).must_equal("7.7")
+      posts = post_message_calls(calls)
+      refute posts.any? { |c| !c[:body].key?("thread_ts") }, "no new parent expected"
+      expect(posts.first[:body]["thread_ts"]).must_equal("7.7")
       expect(store.finds).must_equal([["app#main", seen_process]])
     end
 
@@ -276,7 +323,11 @@ describe ChatNotifier::Chatter::Slack do
       ]
       bodies = []
       process = lambda do |uri, body, headers = nil|
-        bodies << JSON.parse(body)
+        bodies << begin
+          JSON.parse(body)
+        rescue JSON::ParserError
+          body # form-encoded conversations.replies fetch
+        end
         responses.shift || FakeResponse.new(%({"ok":true,"ts":"111.222"}))
       end
       slept = []
@@ -285,9 +336,84 @@ describe ChatNotifier::Chatter::Slack do
       communicator.post(messenger, process:)
 
       expect(slept).must_equal([7])
-      # parent + first reply + its retry + second reply + status reply
-      expect(bodies.size).must_equal(5)
+      # parent + first reply + its retry + second reply + status reply + replies fetch
+      expect(bodies.size).must_equal(6)
       expect(bodies[1]["text"]).must_equal(bodies[2]["text"])
+    end
+
+    describe "recomputing the parent digest after the status reply" do
+      let(:messenger) { DigestMessengerDouble.new }
+
+      let(:replies_body) do
+        JSON.generate({
+          ok: true,
+          messages: [
+            {ts: "111.222", text: "parent"},
+            {ts: "111.300", metadata: {event_type: "chat_notifier_status",
+                                       event_payload: {job: "test ruby-3.2", status: "failed", failures: 3, run_id: "42"}}},
+            {ts: "111.400", metadata: {event_type: "chat_notifier_status",
+                                       event_payload: {job: "test ruby-3.3", status: "passed", failures: 0, run_id: "42"}}}
+          ]
+        })
+      end
+
+      def run_with_scripted_replies(messenger)
+        responses = [
+          FakeResponse.new(%({"ok":true,"ts":"111.222"})),
+          FakeResponse.new(%({"ok":true,"ts":"111.300"})),
+          FakeResponse.new(%({"ok":true,"ts":"111.400"})),
+          FakeResponse.new(replies_body),
+          FakeResponse.new(%({"ok":true}))
+        ]
+        calls = []
+        process = lambda do |uri, body, headers = nil|
+          calls << {uri: uri.to_s, body:, headers:}
+          responses.shift || FakeResponse.new(%({"ok":true}))
+        end
+        communicator.post(messenger, process:)
+        calls
+      end
+
+      it "fetches the thread's replies with metadata after posting the status reply" do
+        calls = run_with_scripted_replies(messenger)
+
+        fetch = calls[3]
+        expect(fetch[:uri]).must_equal("https://slack.com/api/conversations.replies")
+        expect(fetch[:body]).must_match(/ts=111\.222/)
+        expect(fetch[:body]).must_match(/include_all_metadata/)
+      end
+
+      it "updates the parent with the digest of the status reports" do
+        calls = run_with_scripted_replies(messenger)
+
+        update = calls.last
+        expect(update[:uri]).must_equal("https://slack.com/api/chat.update")
+        body = JSON.parse(update[:body])
+        expect(body["channel"]).must_equal("#test")
+        expect(body["ts"]).must_equal("111.222")
+        expect(body["text"]).must_equal("DIGEST TEXT")
+        expect(body["metadata"]["event_type"]).must_equal("chat_notifier_thread")
+        expect(body["metadata"]["event_payload"]["key"]).must_equal("app#main")
+        expect(body["metadata"]["event_payload"]["status"]).must_equal("failing")
+      end
+
+      it "passes the parsed status payloads to the messenger digest" do
+        run_with_scripted_replies(messenger)
+
+        expect(messenger.digest_reports).must_equal([
+          {"job" => "test ruby-3.2", "status" => "failed", "failures" => 3, "run_id" => "42"},
+          {"job" => "test ruby-3.3", "status" => "passed", "failures" => 0, "run_id" => "42"}
+        ])
+      end
+
+      it "marks the parent resolved when the messenger reports resolution" do
+        messenger = DigestMessengerDouble.new(resolved: true)
+        calls = run_with_scripted_replies(messenger)
+
+        body = JSON.parse(calls.last[:body])
+        expect(calls.last[:uri]).must_equal("https://slack.com/api/chat.update")
+        expect(body["metadata"]["event_payload"]["status"]).must_equal("resolved")
+      end
     end
 
     describe "#api_form_post" do

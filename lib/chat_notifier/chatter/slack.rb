@@ -8,6 +8,8 @@ module ChatNotifier
       Chatter.register self
 
       API_URL = "https://slack.com/api/chat.postMessage"
+      REPLIES_URL = "https://slack.com/api/conversations.replies"
+      UPDATE_URL = "https://slack.com/api/chat.update"
       DEFAULT_THREAD_GROUP_SIZE = 10
       STATUS_EVENT_TYPE = "chat_notifier_status"
 
@@ -92,6 +94,27 @@ module ChatNotifier
 
         post_message(text: status_text(messenger), thread_ts:, process:,
           metadata: {event_type: STATUS_EVENT_TYPE, event_payload: messenger.status_report})
+
+        update_parent(messenger, thread_ts, process:)
+      end
+
+      # The parent message is a materialized view of the thread: refetch the
+      # status replies and recompute its text and status via chat.update.
+      def update_parent(messenger, thread_ts, process:)
+        replies = api_form_post(REPLIES_URL,
+          {channel: channel, ts: thread_ts, include_all_metadata: true, limit: 200}, process:)
+        return unless replies["ok"]
+
+        reports = (replies["messages"] || []).filter_map do |message|
+          message.dig("metadata", "event_payload") if message.dig("metadata", "event_type") == STATUS_EVENT_TYPE
+        end
+        return if reports.empty?
+
+        status = messenger.resolved?(reports) ? "resolved" : "failing"
+        body = {channel: channel, ts: thread_ts, text: messenger.digest(reports),
+                metadata: {event_type: ThreadStore::SlackMetadata::EVENT_TYPE,
+                           event_payload: {key: messenger.thread_key, status: status}}}
+        log_api_error(process.call(URI(UPDATE_URL), body.to_json, api_headers))
       end
 
       def status_text(messenger)

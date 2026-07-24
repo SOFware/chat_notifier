@@ -100,6 +100,51 @@ describe ChatNotifier::Messenger do
     end
   end
 
+  describe "#digest" do
+    let(:reports) do
+      [
+        {"job" => "test ruby-3.2", "status" => "failed", "failures" => 12, "run_id" => "43"},
+        {"job" => "test ruby-3.3", "status" => "passed", "failures" => 0, "run_id" => "43"},
+        {"job" => "test ruby-3.2", "status" => "failed", "failures" => 2, "run_id" => "42"}
+      ]
+    end
+    let(:summary) { SummaryDouble.new([LocationDouble.new("spec/test_spec.rb:10")]) }
+    let(:environment) { EnvironmentDouble.new("Ruby 2.7.0", "http://ci") }
+    let(:messenger) { ChatNotifier::Messenger::Failure.new(summary:, app:, repository:, environment:) }
+
+    it "renders latest-run job statuses and ignores older runs" do
+      digest = messenger.digest(reports)
+      expect(digest).must_match(/ruby-3\.2 ❌ 12/)
+      expect(digest).must_match(/ruby-3\.3 ✅/)
+      refute digest.match?(/❌ 2\b/), "older-run failure count must not appear"
+    end
+
+    it "converges: any ordering renders identical text" do
+      texts = reports.permutation.map { |ordering| messenger.digest(ordering) }
+      expect(texts.uniq.size).must_equal(1)
+    end
+
+    it "reports resolved when the latest run is all green" do
+      all_green = [
+        {"job" => "test ruby-3.2", "status" => "passed", "failures" => 0, "run_id" => "44"},
+        {"job" => "test ruby-3.3", "status" => "failed", "failures" => 1, "run_id" => "43"}
+      ]
+      assert messenger.resolved?(all_green), "latest run all green must be resolved"
+      refute messenger.resolved?(reports), "latest run with failures must not be resolved"
+      expect(messenger.digest(all_green)).must_match(/\A✅/)
+    end
+
+    it "treats reports without run_id as the oldest run" do
+      mixed = [
+        {"job" => "legacy", "status" => "failed", "failures" => 5},
+        {"job" => "test ruby-3.2", "status" => "passed", "failures" => 0, "run_id" => "43"}
+      ]
+      digest = messenger.digest(mixed)
+      expect(digest).must_match(/ruby-3\.2 ✅/)
+      refute digest.match?(/legacy/), "nil run_id reports must lose to a numbered run"
+    end
+  end
+
   describe "Messenger::Failure" do
     let(:summary) { SummaryDouble.new([LocationDouble.new("spec/test_spec.rb:10")]) }
     let(:app) { AppDouble.new("test_branch", "abcdef123") }

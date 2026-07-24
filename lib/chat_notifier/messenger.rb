@@ -70,6 +70,27 @@ module ChatNotifier
 
     def failure? = !success?
 
+    # Render a parent-message summary from the thread's status reports,
+    # keeping only the latest run's report per job. Deterministic for any
+    # ordering of the same reports so repeated recomputes converge.
+    def digest(reports)
+      latest = latest_run(reports)
+      parts = latest.sort_by { |report| report["job"].to_s }.map do |report|
+        if report["status"] == "passed"
+          "#{report["job"]} ✅"
+        else
+          "#{report["job"]} ❌ #{report["failures"]}"
+        end
+      end
+      prefix = resolved?(reports) ? "✅" : message_prefix
+      "#{prefix} #{identifier} in #{branch} · #{parts.join(" · ")}\n#{environment.test_run_url}"
+    end
+
+    def resolved?(reports)
+      latest = latest_run(reports)
+      !latest.empty? && latest.all? { |report| report["status"] == "passed" }
+    end
+
     def to_h
       {
         text: message
@@ -110,6 +131,18 @@ module ChatNotifier
       def body
         failures.flat_map(&:location).join("\n")
       end
+    end
+
+    private
+
+    def latest_run(reports)
+      grouped = reports.group_by { |report| report["run_id"].to_s }
+      latest_id = grouped.keys.max_by { |id| [id.length, id] }
+      # [length, value] orders numeric strings correctly ("9" < "10") and
+      # sorts nil run_ids ("") as the oldest run.
+      # conversations.replies returns replies oldest-first, so uniq keeps the
+      # earliest status per job per run; jobs post once per run, so it's fine.
+      grouped.fetch(latest_id, []).uniq { |report| report["job"] }
     end
   end
 end
