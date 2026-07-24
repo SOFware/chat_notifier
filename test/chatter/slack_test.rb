@@ -55,6 +55,24 @@ class DigestMessengerDouble
   end
 end
 
+# A passing run: success messengers still expose digest/resolved? (inherited
+# from the base Messenger in production) so the parent can flip to resolved.
+class SuccessDigestMessengerDouble < DigestMessengerDouble
+  def initialize
+    super(resolved: true)
+  end
+
+  def success? = true
+
+  def failure? = false
+
+  def message = ":thumbsup: all good"
+
+  def failures = []
+
+  def status_report = {job: "test ruby-3.4", status: "passed", failures: 0, run_id: "43"}
+end
+
 describe ChatNotifier::Chatter::Slack do
   let(:settings) do
     {
@@ -476,7 +494,8 @@ describe ChatNotifier::Chatter::Slack do
           lede: "ignored",
           message: ":thumbsup: all good",
           failures: [],
-          thread_key: "app#main"
+          thread_key: "app#main",
+          status_report: {job: "test ruby-3.4", status: "passed", failures: 0, run_id: "43"}
         )
       end
 
@@ -486,6 +505,88 @@ describe ChatNotifier::Chatter::Slack do
         expect(calls.size).must_equal(1)
         expect(calls.first[:body]["text"]).must_equal(":thumbsup: all good")
         refute calls.first[:body].key?("thread_ts")
+      end
+
+      describe "#conditional_post" do
+        it "posts resolution into an open episode" do
+          store = StoreDouble.new(ChatNotifier::ThreadStore::ThreadRef.new(ts: "7.7", status: "failing"))
+          communicator.thread_store = store
+          seen_process = nil
+          calls = record_calls do |process|
+            seen_process = process
+            communicator.conditional_post(messenger, process:)
+          end
+
+          status = post_message_calls(calls).first
+          expect(status[:body]["thread_ts"]).must_equal("7.7")
+          expect(status[:body]["metadata"]["event_type"]).must_equal("chat_notifier_status")
+          expect(status[:body]["metadata"]["event_payload"]["status"]).must_equal("passed")
+          expect(store.finds).must_equal([["app#main", seen_process]])
+        end
+
+        it "posts nothing on success when no open episode exists" do
+          communicator.thread_store = StoreDouble.new(nil)
+          calls = record_calls { |process| communicator.conditional_post(messenger, process:) }
+
+          expect(calls).must_be_empty
+        end
+
+        it "posts nothing on success when the episode is already resolved" do
+          communicator.thread_store = StoreDouble.new(ChatNotifier::ThreadStore::ThreadRef.new(ts: "7.7", status: "resolved"))
+          calls = record_calls { |process| communicator.conditional_post(messenger, process:) }
+
+          expect(calls).must_be_empty
+        end
+
+        it "recomputes the parent to resolved after the passed status reply" do
+          messenger = SuccessDigestMessengerDouble.new
+          communicator.thread_store = StoreDouble.new(ChatNotifier::ThreadStore::ThreadRef.new(ts: "7.7", status: "failing"))
+          replies_body = JSON.generate(ok: true, messages: [
+            {ts: "7.7", text: "parent"},
+            {ts: "7.8", metadata: {event_type: "chat_notifier_status",
+                                   event_payload: {job: "test ruby-3.4", status: "passed", failures: 0, run_id: "43"}}}
+          ])
+          responses = [
+            FakeResponse.new(%({"ok":true,"ts":"7.8"})),
+            FakeResponse.new(replies_body),
+            FakeResponse.new(%({"ok":true}))
+          ]
+          calls = []
+          process = lambda do |uri, body, headers = nil|
+            calls << {uri: uri.to_s, body:, headers:}
+            responses.shift || FakeResponse.new(%({"ok":true}))
+          end
+
+          communicator.conditional_post(messenger, process:)
+
+          expect(calls.map { |call| call[:uri] }).must_equal([
+            "https://slack.com/api/chat.postMessage",
+            "https://slack.com/api/conversations.replies",
+            "https://slack.com/api/chat.update"
+          ])
+          body = JSON.parse(calls.last[:body])
+          expect(body["ts"]).must_equal("7.7")
+          expect(body["text"]).must_equal("DIGEST TEXT")
+          expect(body["metadata"]["event_payload"]["status"]).must_equal("resolved")
+        end
+
+        describe "when verbose" do
+          let(:settings) do
+            {
+              "NOTIFY_SLACK_BOT_TOKEN" => "xoxb-test-token",
+              "NOTIFY_SLACK_NOTIFY_CHANNEL" => "#test",
+              "NOTIFIER_VERBOSE" => "true"
+            }
+          end
+
+          it "still posts the plain success message" do
+            calls = record_calls { |process| communicator.conditional_post(messenger, process:) }
+
+            expect(calls.size).must_equal(1)
+            expect(calls.first[:body]["text"]).must_equal(":thumbsup: all good")
+            refute calls.first[:body].key?("thread_ts")
+          end
+        end
       end
     end
   end

@@ -54,6 +54,13 @@ module ChatNotifier
         post_via_api(messenger, process:)
       end
 
+      def conditional_post(messenger, process: method(:http_post))
+        return super unless bot_token
+        return post(messenger, process:) if messenger.failure? || verbose?
+
+        resolve_episode(messenger, process:)
+      end
+
       def payload(data)
         super(Configuration.for(data, self).to_h)
       end
@@ -73,6 +80,18 @@ module ChatNotifier
       end
 
       private
+
+      # Success posts nothing unless an open episode exists for this key:
+      # then a passed status reply closes the loop and the digest flips the
+      # parent to resolved.
+      def resolve_episode(messenger, process:)
+        ref = thread_store.find(messenger.thread_key, process:)
+        return unless ref&.open?
+
+        post_message(text: status_text(messenger), thread_ts: ref.ts, process:,
+          metadata: {event_type: STATUS_EVENT_TYPE, event_payload: messenger.status_report})
+        update_parent(messenger, ref.ts, process:)
+      end
 
       def post_via_api(messenger, process:)
         return post_message(text: messenger.message, process:) unless messenger.failure?
