@@ -73,8 +73,10 @@ module ChatNotifier
     def failure? = !success?
 
     # Render a parent-message summary from the thread's status reports,
-    # keeping only the latest run's report per job. Deterministic for any
-    # ordering of the same reports so repeated recomputes converge.
+    # keeping only the latest run's report per job. A pure function of the
+    # reports plus state shared across matrix jobs (app, sha, branch,
+    # test_run_url) — never the writer's own ruby version or success state —
+    # so any writer, in any order, converges on identical text.
     def digest(reports)
       latest = latest_run(reports)
       parts = latest.sort_by { |report| report["job"].to_s }.map do |report|
@@ -84,8 +86,8 @@ module ChatNotifier
           "#{report["job"]} ❌ #{report["failures"]}"
         end
       end
-      prefix = resolved?(reports) ? "✅" : message_prefix
-      "#{prefix} #{identifier} in #{branch} · #{parts.join(" · ")}\n#{environment.test_run_url}"
+      prefix = resolved?(reports) ? "✅" : ":boom:"
+      "#{prefix} #{app} #{sha} in #{branch} · #{parts.join(" · ")}\n#{environment.test_run_url}"
     end
 
     def resolved?(reports)

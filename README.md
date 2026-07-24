@@ -93,7 +93,9 @@ own thread.
 Caveats: verbose mode (`NOTIFIER_VERBOSE`) posts plain messages and bypasses
 episode resolution, and a thread store passed programmatically
 (`ChatNotifier.call(thread_store: ...)`) takes precedence over
-`NOTIFY_THREAD_STORE=none`.
+`NOTIFY_THREAD_STORE=none`. A single CI job running both RSpec and Minitest
+posts two status reports under the same job identity and only the earliest per
+run counts in the digest — set `NOTIFY_JOB_NAME` per framework to disambiguate.
 
 ### Debug your Slack setup
 

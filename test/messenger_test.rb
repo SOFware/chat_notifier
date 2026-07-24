@@ -121,8 +121,23 @@ describe ChatNotifier::Messenger do
       refute digest.match?(/❌ 2\b/), "older-run failure count must not appear"
     end
 
-    it "converges: any ordering renders identical text" do
-      texts = reports.permutation.map { |ordering| messenger.digest(ordering) }
+    it "renders a writer-independent header without the writer's ruby version" do
+      digest = messenger.digest(reports)
+      expect(digest).must_match(/\A:boom: app abcdef123 in test_branch/)
+      refute digest.match?(/Ruby 2\.7\.0/), "the writing job's ruby version must not appear"
+    end
+
+    it "converges: any writer and any ordering renders identical text" do
+      writers = [
+        messenger,
+        ChatNotifier::Messenger.new(summary: SummaryDouble.new([]), app:, repository:,
+          environment: EnvironmentDouble.new("Ruby 3.3.0", "http://ci")),
+        ChatNotifier::Messenger::Failure.new(summary:, app:, repository:,
+          environment: EnvironmentDouble.new("Ruby 3.4.0", "http://ci"))
+      ]
+      texts = writers.flat_map do |writer|
+        reports.permutation.map { |ordering| writer.digest(ordering) }
+      end
       expect(texts.uniq.size).must_equal(1)
     end
 
