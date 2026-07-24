@@ -65,4 +65,13 @@ describe ChatNotifier::ThreadStore::SlackMetadata do
     logged = capture_logs { assert_nil store.find("app#main") }
     expect(logged).must_match(/missing_scope/)
   end
+
+  it "returns nil and logs when the transport raises" do
+    def chatter.api_form_post(*, **)
+      raise SocketError, "getaddrinfo: nodename nor servname provided"
+    end
+
+    logged = capture_logs { assert_nil store.find("app#main") }
+    expect(logged).must_match(/getaddrinfo/)
+  end
 end

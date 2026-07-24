@@ -27,6 +27,10 @@ module ChatNotifier
         return nil unless message
 
         ThreadRef.new(ts: message["ts"], status: message.dig("metadata", "event_payload", "status"))
+      rescue => error
+        # A failed lookup must never abort posting the notification itself.
+        ChatNotifier.logger.error("ChatNotifier: thread lookup failed: #{error.message}")
+        nil
       end
 
       # Posting the parent with metadata is the record; nothing separate to do.
