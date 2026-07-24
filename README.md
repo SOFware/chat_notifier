@@ -60,7 +60,7 @@ into reasonably sized batches — as threaded replies.
 
 ```
       NOTIFY_SLACK_BOT_TOKEN        # xoxb-… bot token; enables threading
-      NOTIFY_SLACK_NOTIFY_CHANNEL   # channel id or name to post to
+      NOTIFY_SLACK_NOTIFY_CHANNEL   # channel ID (C…) — required for episode threading; a #name only posts
       NOTIFY_SLACK_THREAD_GROUP_SIZE # optional, files per reply (default 10)
 ```
 
@@ -86,9 +86,12 @@ nothing unless they resolve a known open episode.
 supersedes earlier attempts in the digest.
 
 In addition to `chat:write`, the bot needs `channels:history` (and
-`groups:history` for private channels) to find episode threads. Missing scopes
-degrade gracefully: the lookup logs an error and each job falls back to its
-own thread.
+`groups:history` for private channels) to find episode threads, and it must be
+a **member of the channel** (`/invite @YourBot`). Use the channel **ID** in
+`NOTIFY_SLACK_NOTIFY_CHANNEL`: posting accepts a `#name`, but the history
+lookup does not, so a name degrades to per-job threads. Missing scopes or
+membership degrade gracefully: the lookup logs an error and each job falls
+back to its own thread.
 
 Caveats: verbose mode (`NOTIFIER_VERBOSE`) posts plain messages and bypasses
 episode resolution, and a thread store passed programmatically
