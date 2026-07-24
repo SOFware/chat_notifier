@@ -8,7 +8,7 @@ FakeResponse = Struct.new(:body)
 RateLimitedResponse = Struct.new(:body, :code, :headers) do
   def [](key) = headers[key]
 end
-MessengerDouble = Struct.new(:success?, :failure?, :lede, :message, :failures)
+MessengerDouble = Struct.new(:success?, :failure?, :lede, :message, :failures, :thread_key)
 FailureLoc = Struct.new(:location)
 
 describe ChatNotifier::Chatter::Slack do
@@ -83,6 +83,20 @@ describe ChatNotifier::Chatter::Slack do
     end
   end
 
+  describe "#thread_store" do
+    it "defaults to the SlackMetadata store when a bot token is configured" do
+      chatter = ChatNotifier::Chatter::Slack.new(
+        settings: {"NOTIFY_SLACK_BOT_TOKEN" => "xoxb-123"}, repository: nil, environment: nil
+      )
+      expect(chatter.thread_store).must_be_instance_of(ChatNotifier::ThreadStore::SlackMetadata)
+    end
+
+    it "defaults to the null store when only a webhook is configured" do
+      chatter = ChatNotifier::Chatter::Slack.new(settings:, repository: nil, environment: nil)
+      expect(chatter.thread_store).must_be_instance_of(ChatNotifier::ThreadStore::Null)
+    end
+  end
+
   describe "#post with a bot token configured" do
     let(:settings) do
       {
@@ -102,8 +116,13 @@ describe ChatNotifier::Chatter::Slack do
         failures: [
           FailureLoc.new("test/a_test.rb:1"),
           FailureLoc.new("test/b_test.rb:2")
-        ]
+        ],
+        thread_key: "app#main"
       )
+    end
+
+    before do
+      communicator.thread_store = ChatNotifier::ThreadStore::Null.new
     end
 
     def record_calls
@@ -137,6 +156,33 @@ describe ChatNotifier::Chatter::Slack do
       end
       expect(replies[0][:body]["text"]).must_match(%r{test/a_test\.rb})
       expect(replies[1][:body]["text"]).must_match(%r{test/b_test\.rb})
+    end
+
+    it "posts parents with thread metadata carrying the key" do
+      calls = record_calls { |process| communicator.post(messenger, process:) }
+
+      metadata = calls.first[:body]["metadata"]
+      expect(metadata["event_type"]).must_equal("chat_notifier_thread")
+      expect(metadata["event_payload"]["key"]).must_equal("app#main")
+      expect(metadata["event_payload"]["status"]).must_equal("failing")
+    end
+
+    it "threads into an existing open thread instead of posting a parent" do
+      store = mimic(find: [ChatNotifier::ThreadStore::ThreadRef.new(ts: "7.7", status: "failing"), "app#main"])
+      communicator.thread_store = store
+      calls = record_calls { |process| communicator.post(messenger, process:) }
+
+      refute calls.any? { |c| !c[:body].key?("thread_ts") }, "no new parent expected"
+      expect(calls.first[:body]["thread_ts"]).must_equal("7.7")
+      store.verify
+    end
+
+    it "starts a new thread when the existing thread is resolved" do
+      store = mimic(find: [ChatNotifier::ThreadStore::ThreadRef.new(ts: "7.7", status: "resolved"), "app#main"])
+      communicator.thread_store = store
+      calls = record_calls { |process| communicator.post(messenger, process:) }
+
+      refute calls.first[:body].key?("thread_ts"), "resolved thread must not be reused"
     end
 
     it "prefers the bot token over a configured webhook" do
@@ -244,7 +290,8 @@ describe ChatNotifier::Chatter::Slack do
           failure?: false,
           lede: "ignored",
           message: ":thumbsup: all good",
-          failures: []
+          failures: [],
+          thread_key: "app#main"
         )
       end
 

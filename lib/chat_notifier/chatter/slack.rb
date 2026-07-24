@@ -62,25 +62,43 @@ module ChatNotifier
         parsed_response(response)
       end
 
+      # With a bot token the channel itself can store thread metadata.
+      def default_thread_store
+        return super unless bot_token
+
+        ThreadStore::SlackMetadata.new(chatter: self)
+      end
+
       private
 
       def post_via_api(messenger, process:)
-        parent_text = messenger.failure? ? messenger.lede : messenger.message
-        parent = post_message(text: parent_text, process:)
+        return post_message(text: messenger.message, process:) unless messenger.failure?
 
-        return parent unless messenger.failure? && ok?(parent)
+        key = messenger.thread_key
+        ref = thread_store.find(key)
+        thread_ts = ref&.open? ? ref.ts : nil
 
-        thread_ts = response_ts(parent)
-        return parent unless thread_ts
+        unless thread_ts
+          parent = post_message(text: messenger.lede, process:, metadata: parent_metadata(key))
+          return parent unless ok?(parent)
+          thread_ts = response_ts(parent)
+          return parent unless thread_ts
+        end
 
         FailureGroups.new(messenger.failures, group_size: thread_group_size).reply_texts.each do |text|
           post_message(text:, thread_ts:, process:)
         end
       end
 
-      def post_message(text:, process:, thread_ts: nil)
+      def parent_metadata(key)
+        {event_type: ThreadStore::SlackMetadata::EVENT_TYPE,
+         event_payload: {key: key, status: "failing"}}
+      end
+
+      def post_message(text:, process:, thread_ts: nil, metadata: nil)
         body = {channel: channel, text: text}
         body[:thread_ts] = thread_ts if thread_ts
+        body[:metadata] = metadata if metadata
         deliver = -> { process.call(URI(API_URL), body.to_json, api_headers) }
 
         response = deliver.call
