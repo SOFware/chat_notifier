@@ -2,6 +2,7 @@
 
 require_relative "chat_notifier/version"
 
+require_relative "chat_notifier/app"
 require_relative "chat_notifier/messenger"
 require_relative "chat_notifier/thread_store"
 require_relative "chat_notifier/repository"
@@ -44,7 +45,7 @@ module ChatNotifier
       )
       messenger = (kwargs[:messenger] || STANDARDS[:messenger]).for(
         summary,
-        app:,
+        app: App.new(name: app(env:), settings: env),
         repository:,
         environment:
       )
@@ -67,7 +68,7 @@ module ChatNotifier
 
       messenger = (kwargs[:messenger] || STANDARDS[:messenger]).for(
         summary,
-        app:,
+        app: App.new(name: app, settings: ENV),
         repository:,
         environment:
       )

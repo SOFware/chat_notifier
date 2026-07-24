@@ -5,7 +5,7 @@ module ChatNotifier
   class Test < Minitest::Test
     def setup
       # Setup any necessary test data or mocks here
-      @env = {} # Replace with actual environment data if needed
+      @env = {"NOTIFY_APP_NAME" => "TestApp"}
       @summary = "Test summary"
     end
 
