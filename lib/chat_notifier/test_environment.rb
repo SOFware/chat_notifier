@@ -27,6 +27,9 @@ module ChatNotifier
 
     def test_run_url
     end
+
+    def pull_request_ref
+    end
   end
 end
 

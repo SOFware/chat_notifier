@@ -16,7 +16,7 @@ describe ChatNotifier::Messenger do
       url
     end
   end
-  EnvironmentDouble = Struct.new(:ruby_version, :test_run_url)
+  EnvironmentDouble = Struct.new(:ruby_version, :test_run_url, :pull_request_ref)
   SummaryDouble = Struct.new(:failed_examples)
   LocationDouble = Struct.new(:location)
 
@@ -45,6 +45,20 @@ describe ChatNotifier::Messenger do
         messenger = ChatNotifier::Messenger.for(summary, repository: standin, environment: standin, app: standin)
         expect(messenger).must_be_instance_of(ChatNotifier::Messenger::Failure)
       end
+    end
+  end
+
+  describe "#thread_key" do
+    it "combines app and branch when there is no pull request ref" do
+      environment = EnvironmentDouble.new("Ruby 2.7.0", nil, nil)
+      messenger = ChatNotifier::Messenger.new(summary:, app:, repository:, environment:)
+      expect(messenger.thread_key).must_equal("app#test_branch")
+    end
+
+    it "combines app and pull request ref when present" do
+      environment = EnvironmentDouble.new("Ruby 2.7.0", nil, "fix/thing")
+      messenger = ChatNotifier::Messenger.new(summary:, app:, repository:, environment:)
+      expect(messenger.thread_key).must_equal("app#fix/thing")
     end
   end
 

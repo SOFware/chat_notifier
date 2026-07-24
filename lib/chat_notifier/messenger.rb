@@ -56,6 +56,10 @@ module ChatNotifier
       "#{app} #{ruby_version} #{sha}"
     end
 
+    def thread_key
+      "#{app}##{environment.pull_request_ref || branch}"
+    end
+
     def message_prefix = ":thumbsup:"
 
     def success? = true

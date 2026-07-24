@@ -23,4 +23,16 @@ describe ChatNotifier::TestEnvironment::Github do
       expect(ChatNotifier::TestEnvironment::Github.new(settings: settings).run_id).must_equal("12345")
     end
   end
+
+  describe "#pull_request_ref" do
+    it "returns GITHUB_HEAD_REF when present" do
+      env = ChatNotifier::TestEnvironment::Github.new(settings: {"GITHUB_HEAD_REF" => "fix/thing"})
+      expect(env.pull_request_ref).must_equal("fix/thing")
+    end
+
+    it "returns nil when GITHUB_HEAD_REF is empty or missing" do
+      assert_nil ChatNotifier::TestEnvironment::Github.new(settings: {"GITHUB_HEAD_REF" => ""}).pull_request_ref
+      assert_nil ChatNotifier::TestEnvironment::Github.new(settings: {}).pull_request_ref
+    end
+  end
 end

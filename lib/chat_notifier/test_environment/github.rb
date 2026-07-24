@@ -10,6 +10,11 @@ module ChatNotifier
       def run_id
         settings.fetch("NOTIFY_TEST_RUN_ID")
       end
+
+      def pull_request_ref
+        ref = settings.fetch("GITHUB_HEAD_REF", nil)
+        ref unless ref.nil? || ref.empty?
+      end
     end
   end
 end
