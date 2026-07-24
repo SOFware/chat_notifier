@@ -100,10 +100,16 @@ module ChatNotifier
 
       # The parent message is a materialized view of the thread: refetch the
       # status replies and recompute its text and status via chat.update.
+      # Fetch and update are not atomic (Slack has no compare-and-set), so a
+      # concurrent job can win the last write; the next event repairs it.
       def update_parent(messenger, thread_ts, process:)
         replies = api_form_post(REPLIES_URL,
-          {channel: channel, ts: thread_ts, include_all_metadata: true, limit: 200}, process:)
+          {channel: channel, ts: thread_ts, include_all_metadata: true, limit: 1000}, process:)
         return unless replies["ok"]
+
+        if replies["has_more"]
+          ChatNotifier.logger.warn("ChatNotifier: thread replies truncated; parent digest may be stale")
+        end
 
         reports = (replies["messages"] || []).filter_map do |message|
           message.dig("metadata", "event_payload") if message.dig("metadata", "event_type") == STATUS_EVENT_TYPE

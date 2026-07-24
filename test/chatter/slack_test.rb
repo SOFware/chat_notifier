@@ -344,18 +344,20 @@ describe ChatNotifier::Chatter::Slack do
     describe "recomputing the parent digest after the status reply" do
       let(:messenger) { DigestMessengerDouble.new }
 
-      let(:replies_body) do
-        JSON.generate({
-          ok: true,
-          messages: [
-            {ts: "111.222", text: "parent"},
-            {ts: "111.300", metadata: {event_type: "chat_notifier_status",
-                                       event_payload: {job: "test ruby-3.2", status: "failed", failures: 3, run_id: "42"}}},
-            {ts: "111.400", metadata: {event_type: "chat_notifier_status",
-                                       event_payload: {job: "test ruby-3.3", status: "passed", failures: 0, run_id: "42"}}}
-          ]
-        })
+      let(:status_messages) do
+        [
+          {ts: "111.300", metadata: {event_type: "chat_notifier_status",
+                                     event_payload: {job: "test ruby-3.2", status: "failed", failures: 3, run_id: "42"}}},
+          {ts: "111.400", metadata: {event_type: "chat_notifier_status",
+                                     event_payload: {job: "test ruby-3.3", status: "passed", failures: 0, run_id: "42"}}}
+        ]
       end
+
+      let(:replies_payload) do
+        {ok: true, messages: [{ts: "111.222", text: "parent"}] + status_messages}
+      end
+
+      let(:replies_body) { JSON.generate(replies_payload) }
 
       def run_with_scripted_replies(messenger)
         responses = [
@@ -381,6 +383,7 @@ describe ChatNotifier::Chatter::Slack do
         expect(fetch[:uri]).must_equal("https://slack.com/api/conversations.replies")
         expect(fetch[:body]).must_match(/ts=111\.222/)
         expect(fetch[:body]).must_match(/include_all_metadata/)
+        expect(fetch[:body]).must_match(/limit=1000/)
       end
 
       it "updates the parent with the digest of the status reports" do
@@ -413,6 +416,31 @@ describe ChatNotifier::Chatter::Slack do
         body = JSON.parse(calls.last[:body])
         expect(calls.last[:uri]).must_equal("https://slack.com/api/chat.update")
         expect(body["metadata"]["event_payload"]["status"]).must_equal("resolved")
+      end
+
+      describe "when the thread has more replies than one fetch returns" do
+        let(:replies_payload) do
+          {ok: true, has_more: true, messages: [{ts: "111.222", text: "parent"}] + status_messages}
+        end
+
+        it "warns that the digest may be stale but still updates the parent" do
+          calls = nil
+          logged = capture_logs { calls = run_with_scripted_replies(messenger) }
+
+          expect(logged).must_match(/truncated/)
+          expect(calls.last[:uri]).must_equal("https://slack.com/api/chat.update")
+        end
+      end
+
+      describe "when the replies fetch fails" do
+        let(:replies_body) { %({"ok":false,"error":"missing_scope"}) }
+
+        it "does not update the parent" do
+          calls = run_with_scripted_replies(messenger)
+
+          refute calls.any? { |call| call[:uri] == "https://slack.com/api/chat.update" }, "no update expected"
+          assert_nil messenger.digest_reports
+        end
       end
     end
 
