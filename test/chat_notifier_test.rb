@@ -138,5 +138,44 @@ module ChatNotifier
         ENV["NOTIFY_APP_NAME"] = original_app_name
       end
     end
+
+    def test_call_logs_errors_without_leaking_the_webhook_url
+      original_app_name = ENV["NOTIFY_APP_NAME"]
+      ENV["NOTIFY_APP_NAME"] = "TestApp"
+
+      test_box = Object.new
+      def test_box.webhook_url = "https://hooks.slack.com/services/SECRET/TOKEN"
+
+      def test_box.conditional_post(messenger)
+        raise "boom"
+      end
+
+      factory = ->(value) {
+        f = Class.new
+        f.define_singleton_method(:for) { |*, **| value }
+        f
+      }
+      chatter_factory = Class.new
+      chatter_factory.define_singleton_method(:handling) { |env, repository:, environment:| [test_box] }
+
+      logged = capture_logs do
+        ChatNotifier.call(
+          summary: @summary,
+          repository: factory.call(Object.new),
+          environment: factory.call(Object.new),
+          chatter: chatter_factory,
+          messenger: factory.call(Object.new)
+        )
+      end
+
+      assert_match(/RuntimeError: boom/, logged)
+      refute_match(/hooks\.slack\.com/, logged, "webhook URL is a credential and must not be logged")
+    ensure
+      if original_app_name.nil?
+        ENV.delete("NOTIFY_APP_NAME")
+      else
+        ENV["NOTIFY_APP_NAME"] = original_app_name
+      end
+    end
   end
 end

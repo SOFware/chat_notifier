@@ -19,6 +19,17 @@ end
 require "minitest/autorun"
 require "minitest/mock"
 
+def capture_logs
+  require "stringio"
+  io = StringIO.new
+  original = ChatNotifier.logger
+  ChatNotifier.logger = Logger.new(io)
+  yield
+  io.string
+ensure
+  ChatNotifier.logger = original
+end
+
 def mimic(**kwargs)
   m = Minitest::Mock.new
   kwargs.each do |method_name, return_value|
