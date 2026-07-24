@@ -70,7 +70,7 @@ module ChatNotifier
       chatter.each do |box|
         box.conditional_post(messenger)
       rescue => exception
-        logger.error("ChatNotifier: #{box.webhook_url} #{exception.class}: #{exception.message}")
+        logger.error("ChatNotifier: #{box.class} #{exception.class}: #{exception.message}")
       end
     end
   end

@@ -7,6 +7,9 @@ require "json"
 module ChatNotifier
   # All behavior for interacting with a notification platform
   class Chatter
+    OPEN_TIMEOUT = 5
+    READ_TIMEOUT = 10
+
     def initialize(settings:, repository:, environment:)
       @settings = settings
       @repository = repository
@@ -45,16 +48,30 @@ module ChatNotifier
     def body
     end
 
-    def post(messenger, process: Net::HTTP.method(:post))
+    def post(messenger, process: method(:http_post))
       uri = URI(webhook_url)
 
       process.call(uri, payload(messenger))
     end
 
-    def conditional_post(messenger, process: Net::HTTP.method(:post))
+    def conditional_post(messenger, process: method(:http_post))
       return if messenger.success? && !verbose?
 
       post(messenger, process:)
+    end
+
+    def http_client(uri)
+      Net::HTTP.new(uri.host, uri.port).tap do |http|
+        http.use_ssl = uri.scheme == "https"
+        http.open_timeout = OPEN_TIMEOUT
+        http.read_timeout = READ_TIMEOUT
+      end
+    end
+
+    def http_post(uri, body, headers = nil)
+      http_client(uri).start do |http|
+        http.request_post(uri.request_uri, body, headers)
+      end
     end
 
     def verbose?

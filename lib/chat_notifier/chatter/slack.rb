@@ -12,7 +12,9 @@ module ChatNotifier
 
       class << self
         def handles?(settings)
-          !settings.keys.grep(/NOTIFY_SLACK/).empty?
+          %w[NOTIFY_SLACK_WEBHOOK_URL NOTIFY_SLACK_BOT_TOKEN].any? do |key|
+            settings.fetch(key, nil)
+          end
         end
       end
 
@@ -30,11 +32,20 @@ module ChatNotifier
 
       def thread_group_size
         Integer(settings.fetch("NOTIFY_SLACK_THREAD_GROUP_SIZE", DEFAULT_THREAD_GROUP_SIZE))
+      rescue ArgumentError, TypeError
+        DEFAULT_THREAD_GROUP_SIZE
+      end
+
+      # Injectable pause used when Slack rate-limits a post.
+      attr_writer :sleeper
+
+      def sleeper
+        @sleeper ||= Kernel.method(:sleep)
       end
 
       # When a bot token is configured we use the Slack Web API, which can
       # thread failures. The token path is preferred over an incoming webhook.
-      def post(messenger, process: Net::HTTP.method(:post))
+      def post(messenger, process: method(:http_post))
         return super unless bot_token
 
         post_via_api(messenger, process:)
@@ -53,6 +64,8 @@ module ChatNotifier
         return parent unless messenger.failure? && ok?(parent)
 
         thread_ts = response_ts(parent)
+        return parent unless thread_ts
+
         FailureGroups.new(messenger.failures, group_size: thread_group_size).reply_texts.each do |text|
           post_message(text:, thread_ts:, process:)
         end
@@ -61,7 +74,33 @@ module ChatNotifier
       def post_message(text:, process:, thread_ts: nil)
         body = {channel: channel, text: text}
         body[:thread_ts] = thread_ts if thread_ts
-        process.call(URI(API_URL), body.to_json, api_headers)
+        deliver = -> { process.call(URI(API_URL), body.to_json, api_headers) }
+
+        response = deliver.call
+        if rate_limited?(response)
+          sleeper.call(retry_after(response))
+          response = deliver.call
+        end
+        log_api_error(response)
+        response
+      end
+
+      def rate_limited?(response)
+        response.respond_to?(:code) && response.code.to_s == "429"
+      end
+
+      def retry_after(response)
+        Integer(response["Retry-After"])
+      rescue ArgumentError, TypeError
+        1
+      end
+
+      def log_api_error(response)
+        parsed = parsed_response(response)
+        return if parsed["ok"] == true
+
+        error = parsed.fetch("error", "unrecognized response")
+        ChatNotifier.logger.error("ChatNotifier: Slack API error: #{error}")
       end
 
       def api_headers
