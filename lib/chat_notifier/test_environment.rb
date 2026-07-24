@@ -28,6 +28,16 @@ module ChatNotifier
     def test_run_url
     end
 
+    def job_identifier
+      settings.fetch("NOTIFY_JOB_NAME") do
+        job = settings.fetch("GITHUB_JOB", "test")
+        "#{job} ruby-#{RUBY_VERSION}"
+      end
+    end
+
+    def run_id
+    end
+
     def pull_request_ref
     end
   end

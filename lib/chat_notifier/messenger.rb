@@ -62,6 +62,10 @@ module ChatNotifier
 
     def message_prefix = ":thumbsup:"
 
+    def status_report
+      {job: environment.job_identifier, status: "passed", failures: 0, run_id: environment.run_id}
+    end
+
     def success? = true
 
     def failure? = !success?
@@ -82,6 +86,10 @@ module ChatNotifier
       def success? = false
 
       def failure? = !success?
+
+      def status_report
+        super.merge(status: "failed", failures: failures.size)
+      end
 
       def lede
         <<~LEDE.chomp

@@ -9,6 +9,7 @@ module ChatNotifier
 
       API_URL = "https://slack.com/api/chat.postMessage"
       DEFAULT_THREAD_GROUP_SIZE = 10
+      STATUS_EVENT_TYPE = "chat_notifier_status"
 
       class << self
         def handles?(settings)
@@ -88,6 +89,14 @@ module ChatNotifier
         FailureGroups.new(messenger.failures, group_size: thread_group_size).reply_texts.each do |text|
           post_message(text:, thread_ts:, process:)
         end
+
+        post_message(text: status_text(messenger), thread_ts:, process:,
+          metadata: {event_type: STATUS_EVENT_TYPE, event_payload: messenger.status_report})
+      end
+
+      def status_text(messenger)
+        report = messenger.status_report
+        "#{report[:job]}: #{report[:status]}"
       end
 
       def parent_metadata(key)

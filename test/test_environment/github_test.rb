@@ -24,6 +24,18 @@ describe ChatNotifier::TestEnvironment::Github do
     end
   end
 
+  describe "#job_identifier" do
+    it "combines the job name and ruby version" do
+      env = ChatNotifier::TestEnvironment::Github.new(settings: {"GITHUB_JOB" => "test"})
+      expect(env.job_identifier).must_equal("test ruby-#{RUBY_VERSION}")
+    end
+
+    it "prefers NOTIFY_JOB_NAME verbatim" do
+      env = ChatNotifier::TestEnvironment::Github.new(settings: {"NOTIFY_JOB_NAME" => "custom"})
+      expect(env.job_identifier).must_equal("custom")
+    end
+  end
+
   describe "#pull_request_ref" do
     it "returns GITHUB_HEAD_REF when present" do
       env = ChatNotifier::TestEnvironment::Github.new(settings: {"GITHUB_HEAD_REF" => "fix/thing"})

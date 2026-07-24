@@ -16,7 +16,7 @@ describe ChatNotifier::Messenger do
       url
     end
   end
-  EnvironmentDouble = Struct.new(:ruby_version, :test_run_url, :pull_request_ref)
+  EnvironmentDouble = Struct.new(:ruby_version, :test_run_url, :pull_request_ref, :job_identifier, :run_id)
   SummaryDouble = Struct.new(:failed_examples)
   LocationDouble = Struct.new(:location)
 
@@ -71,6 +71,32 @@ describe ChatNotifier::Messenger do
     it "returns a success message" do
       messenger = ChatNotifier::Messenger.for(summary, repository:, environment:, app:)
       expect(messenger.message).must_equal(":thumbsup: app Ruby 2.7.0 abcdef123 is OK on branch https://github.com/test/test_repo/test_branch")
+    end
+  end
+
+  describe "#status_report" do
+    let(:environment) { EnvironmentDouble.new("Ruby 2.7.0", nil, nil, "test ruby-3.4", "42") }
+
+    describe "when the run passes" do
+      let(:summary) { SummaryDouble.new([]) }
+
+      it "reports a passed status with no failures" do
+        messenger = ChatNotifier::Messenger.new(summary:, app:, repository:, environment:)
+        expect(messenger.status_report).must_equal(
+          {job: "test ruby-3.4", status: "passed", failures: 0, run_id: "42"}
+        )
+      end
+    end
+
+    describe "when the run fails" do
+      let(:summary) { SummaryDouble.new([LocationDouble.new("spec/test_spec.rb:10")]) }
+
+      it "reports a failed status with the failure count" do
+        messenger = ChatNotifier::Messenger::Failure.new(summary:, app:, repository:, environment:)
+        expect(messenger.status_report).must_equal(
+          {job: "test ruby-3.4", status: "failed", failures: 1, run_id: "42"}
+        )
+      end
     end
   end
 

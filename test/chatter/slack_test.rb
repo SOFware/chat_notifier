@@ -8,7 +8,7 @@ FakeResponse = Struct.new(:body)
 RateLimitedResponse = Struct.new(:body, :code, :headers) do
   def [](key) = headers[key]
 end
-MessengerDouble = Struct.new(:success?, :failure?, :lede, :message, :failures, :thread_key)
+MessengerDouble = Struct.new(:success?, :failure?, :lede, :message, :failures, :thread_key, :status_report)
 FailureLoc = Struct.new(:location)
 StoreDouble = Struct.new(:ref) do
   def find(key, process: nil)
@@ -127,7 +127,8 @@ describe ChatNotifier::Chatter::Slack do
           FailureLoc.new("test/a_test.rb:1"),
           FailureLoc.new("test/b_test.rb:2")
         ],
-        thread_key: "app#main"
+        thread_key: "app#main",
+        status_report: {job: "test ruby-3.4", status: "failed", failures: 2, run_id: "42"}
       )
     end
 
@@ -162,13 +163,23 @@ describe ChatNotifier::Chatter::Slack do
     it "posts each failure group as a threaded reply using the parent ts" do
       calls = record_calls { |process| communicator.post(messenger, process:) }
 
-      replies = calls.drop(1)
+      replies = calls[1..-2] # between the parent and the trailing status reply
       expect(replies.size).must_equal(2)
       replies.each do |reply|
         expect(reply[:body]["thread_ts"]).must_equal("111.222")
       end
       expect(replies[0][:body]["text"]).must_match(%r{test/a_test\.rb})
       expect(replies[1][:body]["text"]).must_match(%r{test/b_test\.rb})
+    end
+
+    it "posts a status reply with metadata after the failure replies" do
+      calls = record_calls { |process| communicator.post(messenger, process:) }
+
+      status = calls.last[:body]
+      expect(status["thread_ts"]).must_equal("111.222")
+      expect(status["metadata"]["event_type"]).must_equal("chat_notifier_status")
+      expect(status["metadata"]["event_payload"]["job"]).must_equal("test ruby-3.4")
+      expect(status["metadata"]["event_payload"]["status"]).must_equal("failed")
     end
 
     it "posts parents with thread metadata carrying the key" do
@@ -274,8 +285,8 @@ describe ChatNotifier::Chatter::Slack do
       communicator.post(messenger, process:)
 
       expect(slept).must_equal([7])
-      # parent + first reply + its retry + second reply
-      expect(bodies.size).must_equal(4)
+      # parent + first reply + its retry + second reply + status reply
+      expect(bodies.size).must_equal(5)
       expect(bodies[1]["text"]).must_equal(bodies[2]["text"])
     end
 
