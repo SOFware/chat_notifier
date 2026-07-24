@@ -30,6 +30,27 @@ describe ChatNotifier::TestEnvironment::Github do
     end
   end
 
+  describe "#run_key" do
+    it "appends the run attempt so re-runs of the same run sort later" do
+      env = ChatNotifier::TestEnvironment::Github.new(
+        settings: {"NOTIFY_TEST_RUN_ID" => "43", "GITHUB_RUN_ATTEMPT" => "2"}
+      )
+      expect(env.run_key).must_equal("43.2")
+    end
+
+    it "falls back to the bare run id without an attempt" do
+      expect(ChatNotifier::TestEnvironment::Github.new(settings: {"NOTIFY_TEST_RUN_ID" => "43"}).run_key).must_equal("43")
+      assert_nil ChatNotifier::TestEnvironment::Github.new(settings: {"GITHUB_RUN_ATTEMPT" => "2"}).run_key
+    end
+
+    it "does not change test_run_url which needs the bare run id" do
+      env = ChatNotifier::TestEnvironment::Github.new(
+        settings: settings.merge("GITHUB_RUN_ATTEMPT" => "2")
+      )
+      expect(env.test_run_url).must_equal("https://github.com/test/test_repo/actions/runs/12345")
+    end
+  end
+
   describe "#job_identifier" do
     it "combines the job name and ruby version" do
       env = ChatNotifier::TestEnvironment::Github.new(settings: {"GITHUB_JOB" => "test"})

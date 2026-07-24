@@ -38,6 +38,10 @@ module ChatNotifier
     def run_id
     end
 
+    # Key used to group status reports by run in the parent digest. Distinct
+    # from run_id (which URLs need bare) so re-runs can sort as newer runs.
+    def run_key = run_id
+
     def pull_request_ref
     end
   end

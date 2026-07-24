@@ -16,7 +16,7 @@ describe ChatNotifier::Messenger do
       url
     end
   end
-  EnvironmentDouble = Struct.new(:ruby_version, :test_run_url, :pull_request_ref, :job_identifier, :run_id)
+  EnvironmentDouble = Struct.new(:ruby_version, :test_run_url, :pull_request_ref, :job_identifier, :run_key)
   SummaryDouble = Struct.new(:failed_examples)
   LocationDouble = Struct.new(:location)
 
@@ -75,7 +75,9 @@ describe ChatNotifier::Messenger do
   end
 
   describe "#status_report" do
-    let(:environment) { EnvironmentDouble.new("Ruby 2.7.0", nil, nil, "test ruby-3.4", "42") }
+    # run_key (run id + attempt) fills the payload's run_id field so re-runs
+    # of the same GitHub run register as a newer run.
+    let(:environment) { EnvironmentDouble.new("Ruby 2.7.0", nil, nil, "test ruby-3.4", "42.1") }
 
     describe "when the run passes" do
       let(:summary) { SummaryDouble.new([]) }
@@ -83,7 +85,7 @@ describe ChatNotifier::Messenger do
       it "reports a passed status with no failures" do
         messenger = ChatNotifier::Messenger.new(summary:, app:, repository:, environment:)
         expect(messenger.status_report).must_equal(
-          {job: "test ruby-3.4", status: "passed", failures: 0, run_id: "42"}
+          {job: "test ruby-3.4", status: "passed", failures: 0, run_id: "42.1"}
         )
       end
     end
@@ -94,7 +96,7 @@ describe ChatNotifier::Messenger do
       it "reports a failed status with the failure count" do
         messenger = ChatNotifier::Messenger::Failure.new(summary:, app:, repository:, environment:)
         expect(messenger.status_report).must_equal(
-          {job: "test ruby-3.4", status: "failed", failures: 1, run_id: "42"}
+          {job: "test ruby-3.4", status: "failed", failures: 1, run_id: "42.1"}
         )
       end
     end
@@ -132,6 +134,15 @@ describe ChatNotifier::Messenger do
       assert messenger.resolved?(all_green), "latest run all green must be resolved"
       refute messenger.resolved?(reports), "latest run with failures must not be resolved"
       expect(messenger.digest(all_green)).must_match(/\A✅/)
+    end
+
+    it "resolves when a re-run attempt of the same run passes" do
+      rerun = [
+        {"job" => "test ruby-3.2", "status" => "failed", "failures" => 3, "run_id" => "43.1"},
+        {"job" => "test ruby-3.2", "status" => "passed", "failures" => 0, "run_id" => "43.2"}
+      ]
+      assert messenger.resolved?(rerun), "later attempt of the same run must win"
+      expect(messenger.digest(rerun)).must_match(/ruby-3\.2 ✅/)
     end
 
     it "treats reports without run_id as the oldest run" do

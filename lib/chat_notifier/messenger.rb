@@ -63,7 +63,9 @@ module ChatNotifier
     def message_prefix = ":thumbsup:"
 
     def status_report
-      {job: environment.job_identifier, status: "passed", failures: 0, run_id: environment.run_id}
+      # The payload field stays named run_id (persisted in existing threads)
+      # but carries run_key so re-run attempts group as newer runs.
+      {job: environment.job_identifier, status: "passed", failures: 0, run_id: environment.run_key}
     end
 
     def success? = true
