@@ -16,4 +16,5 @@ require "reissue/gem"
 Reissue::Task.create :reissue do |task|
   task.version_file = "lib/chat_notifier/version.rb"
   task.fragment = :git
+  task.push_finalize = :branch
 end
