@@ -3,6 +3,7 @@
 require_relative "chat_notifier/version"
 
 require_relative "chat_notifier/messenger"
+require_relative "chat_notifier/thread_store"
 require_relative "chat_notifier/repository"
 require_relative "chat_notifier/test_environment"
 require_relative "chat_notifier/chatter"
