@@ -4,6 +4,8 @@ require "net/http"
 require "uri"
 require "json"
 
+require_relative "thread_store"
+
 module ChatNotifier
   # All behavior for interacting with a notification platform
   class Chatter
@@ -76,6 +78,21 @@ module ChatNotifier
 
     def verbose?
       !!settings.fetch("NOTIFIER_VERBOSE", false)
+    end
+
+    # Injectable store mapping thread keys to existing chat threads.
+    attr_writer :thread_store
+
+    def thread_store
+      @thread_store ||= if settings.fetch("NOTIFY_THREAD_STORE", nil) == "none"
+        ThreadStore::Null.new
+      else
+        default_thread_store
+      end
+    end
+
+    def default_thread_store
+      ThreadStore::Null.new
     end
 
     def payload(data)
