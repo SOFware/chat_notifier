@@ -328,9 +328,10 @@ describe ChatNotifier::Chatter::Slack do
         FakeResponse.new(%({"ok":false,"error":"channel_not_found"}))
       end
 
-      communicator.post(messenger, process:)
+      logged = capture_logs { communicator.post(messenger, process:) }
 
       expect(calls.size).must_equal(1)
+      expect(logged).must_match(/channel_not_found/)
     end
 
     it "does not post replies when the parent response has no ts" do

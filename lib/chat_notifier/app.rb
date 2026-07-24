@@ -4,12 +4,13 @@ module ChatNotifier
   # The application under test: its name plus the source control context
   # (branch and sha), resolved from CI-standard settings with git fallbacks.
   class App
-    def initialize(name:, settings:)
+    def initialize(name:, settings:, runner: method(:capture))
       @name = name
       @settings = settings
+      @runner = runner
     end
 
-    attr_reader :name, :settings
+    attr_reader :name, :settings, :runner
 
     def to_s = name
 
@@ -38,10 +39,14 @@ module ChatNotifier
     end
 
     def git(command)
-      value = `git #{command} 2>/dev/null`.chomp
+      value = runner.call("git #{command}").to_s.chomp
       value.empty? ? nil : value
     rescue
       nil
+    end
+
+    def capture(command)
+      `#{command} 2>/dev/null`
     end
   end
 end

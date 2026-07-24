@@ -38,10 +38,25 @@ describe ChatNotifier::App do
       expect(app.branch).must_equal("main")
     end
 
-    it "falls back to the current git branch when settings provide nothing" do
-      app = ChatNotifier::App.new(name: "MyApp", settings: {})
-      expect(app.branch).must_be_instance_of(String)
-      refute app.branch.empty?, "expected the git branch fallback to produce a value"
+    it "falls back to git via the runner when settings provide nothing" do
+      commands = []
+      runner = ->(command) {
+        commands << command
+        "feature-x\n"
+      }
+      app = ChatNotifier::App.new(name: "MyApp", settings: {}, runner:)
+      expect(app.branch).must_equal("feature-x")
+      expect(commands).must_equal(["git branch --show-current"])
+    end
+
+    it "returns nil when git has no answer (e.g. detached HEAD in CI)" do
+      app = ChatNotifier::App.new(name: "MyApp", settings: {}, runner: ->(_) { "" })
+      assert_nil app.branch
+    end
+
+    it "returns nil when the runner raises" do
+      app = ChatNotifier::App.new(name: "MyApp", settings: {}, runner: ->(_) { raise Errno::ENOENT })
+      assert_nil app.branch
     end
   end
 
@@ -62,10 +77,15 @@ describe ChatNotifier::App do
       expect(app.sha).must_equal("def5678")
     end
 
-    it "falls back to the current git sha when settings provide nothing" do
-      app = ChatNotifier::App.new(name: "MyApp", settings: {})
-      expect(app.sha).must_be_instance_of(String)
-      refute app.sha.empty?, "expected the git sha fallback to produce a value"
+    it "falls back to git via the runner when settings provide nothing" do
+      commands = []
+      runner = ->(command) {
+        commands << command
+        "abc1234\n"
+      }
+      app = ChatNotifier::App.new(name: "MyApp", settings: {}, runner:)
+      expect(app.sha).must_equal("abc1234")
+      expect(commands).must_equal(["git rev-parse --short HEAD"])
     end
   end
 
