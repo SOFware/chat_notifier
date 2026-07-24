@@ -67,6 +67,34 @@ into reasonably sized batches — as threaded replies.
 When both `NOTIFY_SLACK_BOT_TOKEN` and `NOTIFY_SLACK_WEBHOOK_URL` are set, the
 bot token is preferred. The bot needs the `chat:write` scope.
 
+### Episode threading (bot token only)
+
+With a bot token, ChatNotifier keeps **one thread per breakage episode** on a
+branch/PR — shared across parallel CI jobs (matrix builds). Parent messages
+carry message metadata; each job finds the episode thread by scanning channel
+history, so no shared storage is needed. The parent is a live status digest
+updated as each job reports (e.g. `test ruby-3.2 ❌ 12 · test ruby-3.3 ✅`) and
+flips to ✅ resolved when the latest run is all green. Passing runs post
+nothing unless they resolve a known open episode.
+
+```
+      NOTIFY_THREAD_STORE           # set to "none" to opt out of episode threading
+      NOTIFY_JOB_NAME               # optional job identity (default: GITHUB_JOB + ruby version)
+```
+
+`GITHUB_RUN_ATTEMPT` is picked up automatically, so "Re-run failed jobs"
+supersedes earlier attempts in the digest.
+
+In addition to `chat:write`, the bot needs `channels:history` (and
+`groups:history` for private channels) to find episode threads. Missing scopes
+degrade gracefully: the lookup logs an error and each job falls back to its
+own thread.
+
+Caveats: verbose mode (`NOTIFIER_VERBOSE`) posts plain messages and bypasses
+episode resolution, and a thread store passed programmatically
+(`ChatNotifier.call(thread_store: ...)`) takes precedence over
+`NOTIFY_THREAD_STORE=none`.
+
 ### Debug your Slack setup
 
 Create rake task to test the connection to your Slack channel
