@@ -160,6 +160,27 @@ describe ChatNotifier::Messenger do
       expect(messenger.digest(rerun)).must_match(/ruby-3\.2 ✅/)
     end
 
+    it "fails a job when any of its workers failed, whatever the reporting order" do
+      workers = [
+        {"job" => "rspec", "status" => "passed", "failures" => 0, "run_id" => "43"},
+        {"job" => "rspec", "status" => "failed", "failures" => 4, "run_id" => "43"},
+        {"job" => "rspec", "status" => "failed", "failures" => 3, "run_id" => "43"}
+      ]
+      workers.permutation.each do |ordering|
+        refute messenger.resolved?(ordering), "a passing worker must not resolve its siblings' failures"
+        expect(messenger.digest(ordering)).must_match(/rspec ❌ 7/)
+      end
+    end
+
+    it "resolves a job only when every worker passed" do
+      workers = [
+        {"job" => "rspec", "status" => "passed", "failures" => 0, "run_id" => "43"},
+        {"job" => "rspec", "status" => "passed", "failures" => 0, "run_id" => "43"}
+      ]
+      assert messenger.resolved?(workers)
+      expect(messenger.digest(workers)).must_match(/rspec ✅/)
+    end
+
     it "treats reports without run_id as the oldest run" do
       mixed = [
         {"job" => "legacy", "status" => "failed", "failures" => 5},
