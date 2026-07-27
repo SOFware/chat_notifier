@@ -144,9 +144,23 @@ module ChatNotifier
       latest_id = grouped.keys.max_by { |id| [id.length, id] }
       # [length, value] orders numeric strings correctly ("9" < "10") and
       # sorts nil run_ids ("") as the oldest run.
-      # conversations.replies returns replies oldest-first, so uniq keeps the
-      # earliest status per job per run; jobs post once per run, so it's fine.
-      grouped.fetch(latest_id, []).uniq { |report| report["job"] }
+      grouped.fetch(latest_id, []).group_by { |report| report["job"] }.map do |job, group|
+        fold(job, group)
+      end
+    end
+
+    # A job identity can report more than once per run: parallel test runners
+    # (parallel_tests, Knapsack) spawn a process per worker, each with its own
+    # formatter, all sharing one job name. Any worker failing fails the job, so
+    # fold the group rather than keeping whichever arrived first — otherwise a
+    # worker that passed silently resolves the episode its sibling just opened.
+    # Commutative, so every writer converges on the same digest.
+    def fold(job, group)
+      {
+        "job" => job,
+        "status" => (group.any? { |report| report["status"] != "passed" }) ? "failed" : "passed",
+        "failures" => group.sum { |report| report["failures"].to_i }
+      }
     end
   end
 end

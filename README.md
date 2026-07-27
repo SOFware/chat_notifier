@@ -96,9 +96,15 @@ back to its own thread.
 Caveats: verbose mode (`NOTIFIER_VERBOSE`) posts plain messages and bypasses
 episode resolution, and a thread store passed programmatically
 (`ChatNotifier.call(thread_store: ...)`) takes precedence over
-`NOTIFY_THREAD_STORE=none`. A single CI job running both RSpec and Minitest
-posts two status reports under the same job identity and only the earliest per
-run counts in the digest — set `NOTIFY_JOB_NAME` per framework to disambiguate.
+`NOTIFY_THREAD_STORE=none`.
+
+Reporting more than once under one job identity is safe. Parallel runners
+(`parallel_tests`, Knapsack) spawn a process per worker, each with its own
+formatter, and a single job running both RSpec and Minitest posts twice.
+Reports sharing a job name are folded per run — failure counts sum and any
+failure fails the job — so the digest keeps one line per job and a worker that
+passed cannot resolve the episode its sibling opened. Set `NOTIFY_JOB_NAME` if
+you would rather they appear as separate lines.
 
 ### Debug your Slack setup
 
