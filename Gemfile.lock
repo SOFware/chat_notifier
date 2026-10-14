@@ -19,7 +19,7 @@ GEM
       prism (>= 1.3.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    json (2.21.2)
+    json (3.1.0)
     language_server-protocol (3.17.0.6)
     lint_roller (1.1.0)
     logger (1.7.0)
@@ -27,7 +27,7 @@ GEM
       drb (~> 2.0)
       prism (~> 1.5)
     minitest-mock (5.27.0)
-    parallel (2.1.0)
+    parallel (2.3.0)
     parser (3.3.12.0)
       ast (~> 2.4.1)
       racc
@@ -47,13 +47,13 @@ GEM
       prism (>= 1.6.0)
       rbs (>= 4.0.0)
       tsort
-    regexp_parser (2.12.0)
+    regexp_parser (2.13.1)
     reissue (0.5.2)
       rake
     reline (0.6.3)
       io-console (~> 0.5)
-    rubocop (1.88.2)
-      json (~> 2.3)
+    rubocop (1.91.0)
+      json (>= 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
       parallel (>= 1.10)
@@ -75,10 +75,10 @@ GEM
     simplecov-json (0.2.3)
       json
       simplecov
-    standard (1.56.0)
+    standard (1.57.0)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.0)
-      rubocop (~> 1.88.0)
+      rubocop (~> 1.91.0)
       standard-custom (~> 1.0.0)
       standard-performance (~> 1.8)
     standard-custom (1.0.2)
@@ -88,9 +88,9 @@ GEM
       lint_roller (~> 1.1)
       rubocop-performance (~> 1.26.0)
     tsort (0.2.0)
-    unicode-display_width (3.2.0)
-      unicode-emoji (~> 4.1)
-    unicode-emoji (4.2.0)
+    unicode-display_width (3.3.0)
+      unicode-emoji (~> 4.3)
+    unicode-emoji (4.3.0)
 
 PLATFORMS
   ruby
